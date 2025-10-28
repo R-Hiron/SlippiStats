@@ -1,0 +1,186 @@
+/* ==== Global Styles ==== */
+:root {
+  --bg-dark: #151515;
+  --bg-panel: #1f1f1f;
+  --bg-card: #2a2a2a;
+  --text-main: #e0e0e0;
+  --text-muted: #aaa;
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --good: #4ade80;   /* green */
+  --bad: #f87171;    /* red */
+  --neutral: #9ca3af;/* gray */
+  --radius: 8px;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 2rem;
+}
+
+/* ==== Buttons & Inputs ==== */
+button {
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+button:hover {
+  background: var(--accent-hover);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid #333;
+  background: var(--bg-panel);
+  color: var(--text-main);
+  font-size: 1rem;
+}
+
+/* ==== Results Layout ==== */
+.results {
+  margin-top: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==== Summary Cards ==== */
+.summary-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.card {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+.card h3 {
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+.card p {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+/* ==== Tables ==== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #333;
+}
+.table th {
+  background: #262626;
+  color: var(--accent);
+  text-align: left;
+  font-weight: 600;
+}
+.table tr:hover td {
+  background: #242424;
+}
+.winrate-good {
+  color: var(--good);
+}
+.winrate-bad {
+  color: var(--bad);
+}
+.winrate-neutral {
+  color: var(--neutral);
+}
+
+/* ==== Headings ==== */
+h1, h2, h3 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+h1 {
+  font-size: 1.8rem;
+  color: var(--accent);
+}
+
+/* ==== Loading Overlay & Spinner ==== */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  color: #fff;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid #4a90e2;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.overlay.fade-out {
+  animation: fadeOut 0.4s ease forwards;
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
