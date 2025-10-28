@@ -19,10 +19,8 @@ function createWindow() {
   });
 
   if (isDev) {
-    // Load Vite's local dev server when in development mode
     win.loadURL('http://localhost:5173');
   } else {
-    // Load the built frontend when packaged
     win.loadFile(path.join(__dirname, 'dist/index.html'));
   }
 }
@@ -55,14 +53,3 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
-
-// 🧩 Run these two commands in separate terminals:
-// Terminal 1: vite
-// Terminal 2: npm start
-//
-// This setup tells Vite to serve the frontend (fixing the MIME issue)
-// while Electron runs separately to show the window.
-//
-// When building for production later, use:
-//   npm run build
-// Then Electron will load from /dist instead of localhost.

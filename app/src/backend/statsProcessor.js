@@ -1,15 +1,10 @@
-// Core modules / deps
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 const crypto = require("crypto");
 const { BrowserWindow } = require("electron");
 
-
-// Slippi parser
 const { SlippiGame } = require("@slippi/slippi-js");
-
-// ----- Static reference data from original script -----
 
 // Characters indexed by internal Slippi character ID
 const characters = [
@@ -18,17 +13,8 @@ const characters = [
 
 const characters_lowercase = characters.map(c => c.toLowerCase());
 
-// Stages indexed by internal Slippi stage ID.
-// (These indexes map to game.getSettings().stageId)
 const stages = [
-  null, null,
-  "Fountain of Dreams", "Pokémon Stadium", "Princess Peach's Castle", "Kongo Jungle",
-  "Brinstar", "Corneria", "Yoshi's Story", "Onett", "Mute City", "Rainbow Cruise",
-  "Jungle Japes", "Great Bay", "Hyrule Temple", "Brinstar Depths",
-  "Yoshi's Island", "Green Greens", "Fourside", "Mushroom Kingdom I",
-  "Mushroom Kingdom II", null, "Venom", "Poké Floats", "Big Blue",
-  "Icicle Mountain", "Icetop", "Flat Zone", "Dream Land N64",
-  "Yoshi's Island N64", "Kongo Jungle N64", "Battlefield", "Final Destination"
+  null, null, "Fountain of Dreams", "Pokémon Stadium", "Princess Peach's Castle", "Kongo Jungle", "Brinstar", "Corneria", "Yoshi's Story", "Onett", "Mute City", "Rainbow Cruise", "Jungle Japes", "Great Bay", "Hyrule Temple", "Brinstar Depths", "Yoshi's Island", "Green Greens", "Fourside", "Mushroom Kingdom I", "Mushroom Kingdom II", null, "Venom", "Poké Floats", "Big Blue", "Icicle Mountain", "Icetop", "Flat Zone", "Dream Land N64", "Yoshi's Island N64", "Kongo Jungle N64", "Battlefield", "Final Destination"
 ];
 
 let cancelRequested = false;
@@ -36,10 +22,6 @@ let cancelRequested = false;
 function cancelAnalysis() {
   cancelRequested = true;
 }
-
-// ------------------------------------------------------
-// Utility
-// ------------------------------------------------------
 
 function secondsToHMS(seconds) {
   const format = val =>
@@ -49,8 +31,6 @@ function secondsToHMS(seconds) {
   return [hours, minutes, seconds % 60].map(format).join(":");
 }
 
-// Safely pull name/code info for a player slot.
-// Returns { tagLower, displayName, connectCode }
 function extractIdentity(metaPlayer) {
   if (!metaPlayer || !metaPlayer.names) {
     return {
@@ -68,24 +48,21 @@ function extractIdentity(metaPlayer) {
   ].filter(Boolean);
 
   return {
-    tagLower,            // array of lowercase forms we can match against
-    displayName,         // pretty name
-    connectCode          // e.g. ABCD#123
+    tagLower,
+    displayName,
+    connectCode
   };
 }
 
-// Check if ANY of the player's tags match ANY of the wanted values.
 function matchesAnyTag(identity, wantedListLower) {
   if (!wantedListLower || wantedListLower.length === 0) return true; // no filter
   if (!identity.tagLower || identity.tagLower.length === 0) return false;
 
-  // does any known tag (netplay name OR connect code) match any requested?
   return identity.tagLower.some(playerTag =>
     wantedListLower.some(req => playerTag.includes(req))
   );
 }
 
-// Check if this opponent is in ignored list
 function isIgnoredOpponent(identity, ignoredLower) {
   if (!ignoredLower || ignoredLower.length === 0) return false;
   if (!identity.tagLower || identity.tagLower.length === 0) return false;
@@ -95,17 +72,15 @@ function isIgnoredOpponent(identity, ignoredLower) {
   );
 }
 
-// Convert a requested character string like "falco" into (num, properName)
 function resolveCharacterFilter(requestedCharLower) {
   if (!requestedCharLower) return null;
   const idx = characters_lowercase.indexOf(requestedCharLower.toLowerCase());
   if (idx === -1) {
-    return null; // invalid character request
+    return null;
   }
   return { num: idx, name: characters[idx] };
 }
 
-// Hash replay contents to use for caching so we don't rescan unchanged games
 function hashReplayFile(filePath) {
   try {
     const buf = fs.readFileSync(filePath);
@@ -116,7 +91,6 @@ function hashReplayFile(filePath) {
   }
 }
 
-// Load / init cache from replay folder
 function loadCache(cacheFilePath) {
   try {
     const raw = fs.readFileSync(cacheFilePath, "utf8");
@@ -126,15 +100,12 @@ function loadCache(cacheFilePath) {
     }
     return parsed;
   } catch {
-    // No cache yet
     return { results: {} };
   }
 }
 
-// Write updated cache to disk
 function writeCache(cacheFilePath, cacheObj, meta) {
   const data = {
-    // optional meta
     statsVersion: meta?.statsVersion || "ui-port",
     slippiJsVersion: meta?.slippiJsVersion || "unknown",
     user_player_arg: meta?.userPlayerArg || "",
@@ -143,13 +114,6 @@ function writeCache(cacheFilePath, cacheObj, meta) {
 
   fs.writeFileSync(cacheFilePath, JSON.stringify(data));
 }
-
-// ------------------------------------------------------
-// processSingleReplay
-// This is the heart of per-game extraction. It's adapted from the
-// original processGame() + loadGameData() steps, but returns structured data
-// instead of printing logs.
-// ------------------------------------------------------
 
 function processSingleReplay({
   file,
@@ -160,12 +124,8 @@ function processSingleReplay({
   playerCharacterFilter,
   opponentCharacterFilter
 }) {
-  // We'll return a stat object describing this game OR null if ignored.
-  // Final shape mirrors what your original processGame fed into processResults.
   const data = {};
 
-  // if loadGameData failed in original, it would skip. We assume gameData
-  // already handled reading SlippiGame and basic parse -> we'll do it inline
   try {
     const {
       settings,
@@ -175,11 +135,8 @@ function processSingleReplay({
       total_seconds
     } = gameData;
 
-    // Some very old (pre-July 2020) replays could have missing metadata.
-    // If no metadata players, skip counting as a match, but DO count toward total_seconds in overall time.
     const playersMeta = metadata?.players || [];
 
-    // Build identity info for both player slots
     const p0 = extractIdentity(playersMeta[0]);
     const p1 = extractIdentity(playersMeta[1]);
 
@@ -188,10 +145,6 @@ function processSingleReplay({
       return null;
     }
 
-    // We'll consider only 1v1 (just like original script ignoring doubles/unreadable weird stuff)
-    // Original script implicitly assumed two players and skipped 2v2 logic.
-    // If it’s not 2 valid players, we still count total time (for "total_seconds")
-    // but we can't form matchup stats
     if (playersMeta.length < 2 || !settings.players || settings.players.length < 2) {
       return {
         total_seconds,
@@ -199,26 +152,16 @@ function processSingleReplay({
       };
     }
 
-    // Determine which slot is "you" and which is "opponent"
-    // The CLI tool allowed multiple self-tags and multiple opponent-tags.
-    // We mimic that logic.
-
-    // candidate: you are p0
     const p0MatchesYou = matchesAnyTag(p0, wantedPlayersLower);
     const p1MatchesYou = matchesAnyTag(p1, wantedPlayersLower);
 
-    // candidate: opponent is p0 or p1
     const p0MatchesOppFilter = matchesAnyTag(p0, wantedOpponentLower);
     const p1MatchesOppFilter = matchesAnyTag(p1, wantedOpponentLower);
 
-    // Pick a viewpoint. Priority:
-    // - If we specified opponent filter, try to build (you vs them) using both filters.
-    // - Else just treat "you" as whoever matched player list.
     let playerIndex = null;
     let opponentIndex = null;
 
     if (wantedOpponentLower && wantedOpponentLower.length > 0) {
-      // We want a specific opponent
       if (p0MatchesYou && p1MatchesOppFilter) {
         playerIndex = 0;
         opponentIndex = 1;
@@ -226,14 +169,12 @@ function processSingleReplay({
         playerIndex = 1;
         opponentIndex = 0;
       } else {
-        // Doesn't match requested pairing
         return {
           total_seconds,
           game_seconds: 0
         };
       }
     } else {
-      // No specific opponent asked for, just match self.
       if (p0MatchesYou && !p1MatchesYou) {
         playerIndex = 0;
         opponentIndex = 1;
@@ -241,12 +182,9 @@ function processSingleReplay({
         playerIndex = 1;
         opponentIndex = 0;
       } else if (p0MatchesYou && p1MatchesYou) {
-        // mirror match with two of your own tags? ambiguous.
-        // We'll just pick p0 as player, p1 as opponent
         playerIndex = 0;
         opponentIndex = 1;
       } else {
-        // neither slot belongs to requested player(s)
         return {
           total_seconds,
           game_seconds: 0
@@ -254,11 +192,9 @@ function processSingleReplay({
       }
     }
 
-    // If we got here, we have a viewpoint.
     const playerIdentity = playerIndex === 0 ? p0 : p1;
     const opponentIdentity = opponentIndex === 0 ? p0 : p1;
 
-    // filter: ignored opponents list
     if (isIgnoredOpponent(opponentIdentity, ignoredOpponentsLower)) {
       return {
         total_seconds,
@@ -266,15 +202,12 @@ function processSingleReplay({
       };
     }
 
-    // Grab character IDs
     const playerCharId = settings.players[playerIndex]?.characterId;
     const oppCharId = settings.players[opponentIndex]?.characterId;
 
     const playerCharName = characters[playerCharId] || "Unknown";
     const oppCharName = characters[oppCharId] || "Unknown";
 
-    // character filters, same logic as original:
-    // - If user requested "my character = falco", and this game I'm not Falco -> skip
     if (
       playerCharacterFilter &&
       playerCharacterFilter.num !== playerCharId
@@ -285,7 +218,6 @@ function processSingleReplay({
       };
     }
 
-    // - If user requested "their character = marth", and opponent isn't Marth -> skip
     if (
       opponentCharacterFilter &&
       opponentCharacterFilter.num !== oppCharId
@@ -296,30 +228,20 @@ function processSingleReplay({
       };
     }
 
-    // Determine game length and win/loss
     const latestPercPlayer = latestFramePercents[playerIndex];
     const latestPercOpp = latestFramePercents[opponentIndex];
 
-    // Stock counts / KOs
-    // Original logic:
-    //   player_kills = stats[player_num]
-    //   opponent_kills = stats[opponent_num]
-    // It read from stats.overall[x].killCount.
     const playerKills = (stats?.overall?.[playerIndex]?.killCount) || 0;
     const opponentKills = (stats?.overall?.[opponentIndex]?.killCount) || 0;
 
-    // Game seconds
     const game_seconds = Math.floor(total_seconds || 0);
 
-    // Ignore short/no-kill games like the original:
-    // if under 30 seconds -> skip
     if (game_seconds < 30) {
       return {
         total_seconds,
         game_seconds: 0
       };
     }
-    // if both got 0 kills -> skip
     if (playerKills === 0 && opponentKills === 0) {
       return {
         total_seconds,
@@ -327,22 +249,17 @@ function processSingleReplay({
       };
     }
 
-    // Win rules:
-    // more kills OR equal kills but lower percent at end
     const moreKills = playerKills > opponentKills;
     const lowerPercent = (playerKills === opponentKills) && (latestPercPlayer < latestPercOpp);
 
     const didWin = moreKills || lowerPercent;
 
-    // Stage ID
     let stageId = Number(settings?.stageId);
     if (isNaN(stageId) || stageId < 0 || stageId >= stages.length) {
       stageId = null;
     }
     const stageName = stageId !== null ? stages[stageId] || `Unknown (${stageId})` : "Unknown";
 
-
-    // Fill data object that processResults() in the old script depended on
     data.total_games = 1;
     data.total_wins = didWin ? 1 : 0;
     data.total_seconds = total_seconds;
@@ -365,9 +282,7 @@ function processSingleReplay({
     return data;
 
   } catch (err) {
-    // If replay can't be parsed, match original behavior:
-    // count total_seconds if we got it from cached gameData,
-    // but otherwise skip stats.
+
     return {
       total_seconds: gameData?.total_seconds || 0,
       game_seconds: 0
@@ -375,37 +290,15 @@ function processSingleReplay({
   }
 }
 
-
-// ------------------------------------------------------
-// Public main function: analyzeReplays
-// ------------------------------------------------------
-
-/**
- * analyzeReplays(folderPath, options)
- *
- * folderPath: string (root folder that contains .slp files, or has subfolders)
- *
- * options: {
- *   playerTags:          [ "rily#420", "rily" ]  // REQUIRED: you / your alts
- *   opponentTags:        [ "zimp#721" ]          // OPTIONAL
- *   ignoredOpponents:    [ "coach#000" ]         // OPTIONAL
- *   playerCharacter:     "falco"                 // OPTIONAL (your char filter, lowercase)
- *   opponentCharacter:   "marth"                 // OPTIONAL (opponent char filter, lowercase)
- * }
- *
- * Returns an object shaped for UI consumption.
- */
 async function analyzeReplays(folderPath, options = {}) {
-  // Normalize and sanitize inputs
   const {
-    playerTags = [],           // required logically, but we won't hard crash
+    playerTags = [],
     opponentTags = [],
     ignoredOpponents = [],
     playerCharacter = null,
     opponentCharacter = null
   } = options;
 
-  // Lowercase all filters for matching
   const wantedPlayersLower = playerTags.map(s => s.toLowerCase().trim()).filter(Boolean);
   const wantedOpponentLower = opponentTags.map(s => s.toLowerCase().trim()).filter(Boolean);
   const ignoredOpponentsLower = ignoredOpponents.map(s => s.toLowerCase().trim()).filter(Boolean);
@@ -413,18 +306,14 @@ async function analyzeReplays(folderPath, options = {}) {
   const playerCharacterFilter = resolveCharacterFilter(playerCharacter);
   const opponentCharacterFilter = resolveCharacterFilter(opponentCharacter);
 
-  // Cache lives in the same folder as replays
   const cacheFilePath = path.join(folderPath, "replayCache.json");
   const cache = loadCache(cacheFilePath);
 
-  // We gather stats across all games here, similar to the original top-level vars.
   let total_games = 0;
   let total_wins = 0;
   let total_seconds = 0;
   let counted_seconds = 0;
 
-  // Arrays / maps to accumulate breakdowns
-  // Keys are character IDs, stage IDs, etc.
   const character_totals = [];
   const character_wins = [];
   const character_playtime = [];
@@ -445,21 +334,15 @@ async function analyzeReplays(folderPath, options = {}) {
   const stage_wins = [];
   const stage_playtime = [];
 
-  // A 2D matchup matrix: character_head_to_head[playerCharId][oppCharId] = [wins, games, oppCharName]
   const character_head_to_head = Array(34).fill().map(() =>
     Array(34).fill().map((_, i) => [0, 0, characters[i]])
   );
 
-  // We'll also keep track of “last seen” names and codes to present summary info
   let final_player_name = "";
   let final_opponent_name = "";
   let real_player_code = "";
   let real_opponent_code = "";
 
-  // Find all replays recursively under folderPath
-  // (like original glob("**/*.slp"))
-  // Normalize path and wrap in quotes to handle spaces
-  // Find all replays recursively under folderPath
 const normalizedPath = path.resolve(folderPath);
 const pattern = `${normalizedPath.replace(/\\/g, "/")}/**/*.slp`;
 const files = glob.sync(pattern, { nodir: true }).sort();
@@ -468,29 +351,24 @@ console.log(`Found ${files.length} replay files in`, normalizedPath);
 
 let new_replays = 0;
 
-// Reset cancel flag at start
 cancelRequested = false;
-let skippedCount = 0; // count replays we skip due to unreadable or invalid data
+let skippedCount = 0;
 
-// Get the main window reference
 const win = BrowserWindow.getAllWindows()[0];
 
-// ---- main replay loop ----
 for (let i = 0; i < files.length; i++) {
-  // Check for cancel
   if (cancelRequested) {
     console.log("Analysis cancelled by user.");
     if (win) win.webContents.send("progress-update", { cancelled: true });
     break;
   }
 
-  // Let Electron handle UI events so Cancel works instantly
   await new Promise((resolve) => setImmediate(resolve));
 
   const file = files[i];
 
   try {
-    // --- your original replay reading logic ---
+
     const hash = hashReplayFile(file);
     let gameData;
 
@@ -532,7 +410,6 @@ for (let i = 0; i < files.length; i++) {
       }
     }
 
-    // --- process one replay ---
     const result = processSingleReplay({
       file,
       gameData,
@@ -548,7 +425,6 @@ for (let i = 0; i < files.length; i++) {
       continue;
     }
 
-    // Skip games with missing or invalid stage info
     if (
       result.stage_num === null ||
       result.stage_num === undefined ||
@@ -559,19 +435,13 @@ for (let i = 0; i < files.length; i++) {
       continue;
     }
 
-
-
-    // --- accumulate results ---
     total_games += result.total_games || 0;
     total_wins += result.total_wins || 0;
     total_seconds += result.total_seconds || 0;
     counted_seconds += result.game_seconds || 0;
 
-
-  // ===== Aggregate per-stage stats using readable names =====
   const stageId = result.stage_num;
 
-  // If stageId is invalid, count it as skipped instead of "Unknown"
   if (
     stageId === null ||
     stageId === undefined ||
@@ -579,28 +449,23 @@ for (let i = 0; i < files.length; i++) {
     !stages[stageId]
   ) {
     skippedCount++;
-    return; // skip this replay
+    return;
   }
 
   const stageName = stages[stageId];
 
-  // Initialize if not present
   if (!stage_totals[stageName]) stage_totals[stageName] = 0;
   if (!stage_wins[stageName]) stage_wins[stageName] = 0;
   if (!stage_playtime[stageName]) stage_playtime[stageName] = 0;
 
-  // Update counts
   stage_totals[stageName]++;
   if (result.total_wins) stage_wins[stageName]++;
   stage_playtime[stageName] += result.game_seconds || 0;
 
-
-  // ===== Aggregate matchups (grouped by your character) =====
-  if (!matchups) var matchups = {}; // initialize if not yet defined
+  if (!matchups) var matchups = {};
   const playerCharacter = result.player_character_name;
   const opponentCharacter = result.opponent_character_name;
 
-  // Skip adding invalid or undefined characters
   if (
     !playerCharacter ||
     !opponentCharacter ||
@@ -632,7 +497,6 @@ for (let i = 0; i < files.length; i++) {
     console.error("Error parsing replay:", file, err.message);
   }
 
-  // --- send progress update ---
   if (win) {
     win.webContents.send("progress-update", {
       processed: i + 1,
@@ -641,18 +505,14 @@ for (let i = 0; i < files.length; i++) {
   }
 }
 
-// Reset cancel flag after loop ends
 cancelRequested = false;
 
-
-  // After loop, update cache file on disk
   writeCache(cacheFilePath, cache, {
     userPlayerArg: wantedPlayersLower.join(",")
   });
 
   cancelRequested = false;
 
-  // If we literally had no valid games, return an object that UI can handle
   if (!total_games) {
     return {
       foundGames: false,
@@ -680,12 +540,10 @@ cancelRequested = false;
     };
   }
 
-  // Compute high-level winrate
   const win_rate = total_games
     ? ((total_wins / total_games) * 100).toFixed(2)
     : "0.00";
 
-  // Build stage results (now keyed by readable stage name, not numeric ID)
   const stageResults = [];
 
   for (const [stageName, games] of Object.entries(stage_totals)) {
@@ -704,12 +562,8 @@ cancelRequested = false;
     });
   }
 
-
-
-  // sort by games played (desc)
   stageResults.sort((a, b) => b.games - a.games);
 
-  // convert to an object keyed by stage name
   const sortedStageResults = {};
   for (const row of stageResults) {
     sortedStageResults[row.stage] = {
@@ -720,8 +574,6 @@ cancelRequested = false;
     };
   }
 
-
-  // nickname stats (your aliases)
   const nickname_results = Object.keys(nickname_totals).map(name => {
     const games = nickname_totals[name] || 0;
     const wins = nickname_wins[name] || 0;
@@ -736,7 +588,6 @@ cancelRequested = false;
     };
   });
 
-  // connect code stats (your connect codes)
   const code_results = Object.keys(code_totals).map(code => {
     const games = code_totals[code] || 0;
     const wins = code_wins[code] || 0;
@@ -753,7 +604,6 @@ cancelRequested = false;
     };
   });
 
-  // opponent stats (by their code)
   const opponent_results = Object.keys(opponent_totals).map(code => {
     const games = opponent_totals[code] || 0;
     const wins = opponent_wins[code] || 0;
@@ -769,11 +619,9 @@ cancelRequested = false;
       playtime: secondsToHMS(play)
     };
   });
-  // You could sort opponent_results by games or by winrate if you want to rank
+
   opponent_results.sort((a, b) => b.games - a.games);
 
-  // matchup matrix → flatten meaningful pairs
-  // We only care about cells where games > 0
   const matchup_results = [];
   for (let pChar = 0; pChar < character_head_to_head.length; pChar++) {
     for (let oChar = 0; oChar < character_head_to_head[pChar].length; oChar++) {
@@ -793,10 +641,9 @@ cancelRequested = false;
       }
     }
   }
-  // Sort by games desc so most common matchups show first
+
   matchup_results.sort((a, b) => b.games - a.games);
 
-  // Build final object for UI
   const resultObject = {
     foundGames: true,
     filters: {
@@ -832,7 +679,6 @@ cancelRequested = false;
   return resultObject;
 }
 
-// Expose the function so Electron's main process can call it
 module.exports = {
   analyzeReplays,
   cancelAnalysis

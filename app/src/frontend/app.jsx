@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./app.css";
 
-
-// Converts "HH:MM:SS" -> "2h 13m 42s" or "45m 02s"
 function formatPlaytime(hms) {
   if (!hms) return "0s";
   const parts = hms.split(":").map(Number);
@@ -30,8 +28,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
 
-  
-  // Folder selection
   const selectFolder = async () => {
     const selected = await window.api.selectFolder();
     if (selected) setFolder(selected);
@@ -41,7 +37,7 @@ function App() {
     const unsubscribe = window.api.onProgress((data) => {
       setProgress(data);
     });
-    return unsubscribe; // cleanup when component unmounts
+    return unsubscribe;
   }, []);
 
   React.useEffect(() => {
@@ -55,7 +51,6 @@ function App() {
     }
   }, [folder]);
 
-  // Analyze using the new backend options format
   const analyze = async () => {
     if (!folder || !tag) {
       alert("Please select a folder and enter your tag first.");
@@ -65,10 +60,9 @@ function App() {
     setLoading(true);
     setResults(null);
 
-    // Construct the options object expected by the backend
     const options = {
       playerTags: [tag],
-      opponentTags: [],        // you can add UI fields later for these
+      opponentTags: [],
       ignoredOpponents: [],
       playerCharacter: character || null,
       opponentCharacter: null,
@@ -76,7 +70,7 @@ function App() {
 
     try {
       const res = await window.api.analyzeReplays(folder, options);
-      console.log("Analysis Results:", res); // Helpful debug log
+      console.log("Analysis Results:", res);
       setResults(res);
     } catch (err) {
       console.error("Error analyzing replays:", err);
