@@ -1,0 +1,39 @@
+name: Build & Publish Slippi Stats Desktop
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Use Node.js 18
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build Vite frontend
+      run: npm run build
+
+    - name: Package Electron app
+      run: npm run make
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: false
+        files: |
+          out/make/squirrel.windows/*.exe
+          out/make/squirrel.windows/*.nupkg
+          out/make/squirrel.windows/RELEASES
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
