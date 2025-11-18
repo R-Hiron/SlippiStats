@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld("api", {
   onProgress: (callback) => {
     ipcRenderer.on("progress-update", (_event, data) => callback(data));
   },
+  onMatchLog: (cb) => ipcRenderer.on("match-log", (_, data) => cb(data)),
 });

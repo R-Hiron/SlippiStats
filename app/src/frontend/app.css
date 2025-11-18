@@ -177,3 +177,35 @@ h1 {
     visibility: hidden;
   }
 }
+
+.character-matchup summary {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+}
+
+.character-matchup summary span {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent window-level scrollbars */
+html, body {
+  overflow: hidden;
+  overflow-y: scroll;
+  height: 100%;
+}
+
+/* Allow internal sections to scroll invisibly if needed */
+.scroll-area {
+  overflow-y: scroll;
+  scrollbar-width: none; /* for Firefox */
+}
+

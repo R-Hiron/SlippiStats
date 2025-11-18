@@ -25,3 +25,6 @@ Thumbs.db
 
 # Electron build cache
 app/*.asar
+
+# Test Files
+app/tests/

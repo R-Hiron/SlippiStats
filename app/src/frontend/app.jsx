@@ -27,6 +27,8 @@ function App() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
+  const [matchLogs, setMatchLogs] = useState([]);
+  const [rankedOnly, setRankedOnly] = useState(false);
 
   const selectFolder = async () => {
     const selected = await window.api.selectFolder();
@@ -51,6 +53,13 @@ function App() {
     }
   }, [folder]);
 
+  React.useEffect(() => {
+    const unsub = window.api.onMatchLog((msg) => {
+      setMatchLogs((prev) => [msg, ...prev].slice(0, 50)); // keep last 50
+    });
+    return unsub;
+  }, []);
+
   const analyze = async () => {
     if (!folder || !tag) {
       alert("Please select a folder and enter your tag first.");
@@ -66,6 +75,7 @@ function App() {
       ignoredOpponents: [],
       playerCharacter: character || null,
       opponentCharacter: null,
+      rankedOnly,
     };
 
     try {
@@ -97,6 +107,9 @@ function App() {
         onChange={(e) => setTag(e.target.value)}
         style={{ display: "block", margin: "0.5rem 0", width: "100%" }}
       />
+      <input id="rankedOnly" type="checkbox" checked={rankedOnly} onChange={(e) => setRankedOnly(e.target.checked)} />
+      <label htmlFor="rankedOnly">Ranked Only</label>
+
 
       <input
         placeholder="Character (optional)"
@@ -116,6 +129,22 @@ function App() {
         <p style={{ marginBottom: "0.5rem" }}>
           Analyzing replays {progress.processed} / {progress.total}
         </p>
+        <div style={{ 
+            maxHeight: "180px",
+            overflowY: "auto",
+            fontSize: "0.9rem",
+            marginBottom: "10px",
+            paddingRight: "6px"
+          }}>
+            {matchLogs.map((log, i) => {
+              const color = log.userWon ? "#4ade80" : "#f87171"; // green/red
+              return (
+                <div key={i} style={{ color, marginBottom: "4px" }}>
+                  {log.p1} vs {log.p2} on {log.stage} – {log.userWon ? "Win" : "Loss"}
+                </div>
+              );
+            })}
+          </div>
         <div
           style={{
             width: "60%",
@@ -239,8 +268,13 @@ function App() {
         {results.matchups && Object.keys(results.matchups).length > 0 ? (
           Object.entries(results.matchups).map(([char, opponents]) => (
             <details key={char} style={{ marginBottom: "1rem" }}>
-              <summary style={{ fontWeight: "bold", cursor: "pointer" }}>
+              <summary>
                 {char}
+                {formatPlaytime(results.characterPlaytime?.[char]) && (
+                  <span style={{ marginLeft: '0.5rem', color: '#ccc', fontWeight: 'normal' }}>
+                    – {formatPlaytime(results.characterPlaytime[char])}
+                  </span>
+                )}
               </summary>
               <table className="table" style={{ marginTop: "0.5rem" }}>
                 <thead>
@@ -276,6 +310,69 @@ function App() {
         ) : (
           <p>No matchup data found.</p>
         )}
+        {/* --- Misc. Stats --- */}
+        <h2>Misc Stats</h2>
+        <div className="summary-cards">
+
+          <div className="card">
+            <h3>L-Cancel Rate</h3>
+            <p>{results.misc.avgLcancelRate}</p>
+            <h5>Succeeded / Failed L-Cancels</h5>
+            <h4>{results.misc.lCancelSuccessTotal} / {results.misc.lCancelFailTotal}</h4>
+          </div>
+
+          <div className="card">
+            <h3>Total Wavedashes</h3>
+            <p>{results.misc.wavedashTotal}</p>
+            <h5>Average per Game</h5>
+            <h4>{results.misc.avgWavedashes}</h4>
+          </div>
+
+          <div className="card">
+            <h3>Total Rolls</h3>
+            <p>{results.misc.rollTotal}</p>
+            <h5>Average per Game</h5>
+            <h4>{results.misc.avgRolls}</h4>
+          </div>
+
+          <div className="card">
+            <h3>Ledge Grabs</h3>
+            <p>{results.misc.ledgegrabTotal}</p>
+            <h5>Average per Game</h5>
+            <h4>{results.misc.avgLedgegrabs}</h4>
+          </div>
+
+          <div className="card">
+            <h3>Dash Dances</h3>
+            <p>{results.misc.dashDanceTotal}</p>
+            <h5>Average per Game</h5>
+            <h4>{results.misc.avgDashDances}</h4>
+          </div>
+
+          <div className="card">
+            <h3>Tech Success Rate</h3>
+            <p>{results.misc.techSuccessRate}</p>
+            <h5>Succeeded / Failed L-Cancels</h5>
+            <h4>{results.misc.techSuccessTotal} / {results.misc.techFailTotal}</h4>
+          </div>
+
+          <div className="card">
+            <h3>Stocks Taken / Lost</h3>
+            <p>{results.misc.totalStocksTaken} / {results.misc.totalStocksLost}</p>
+          </div>
+
+          <div className="card">
+            <h3>Most Used Throw</h3>
+            <p>{results.misc.topThrowDir.toUpperCase()} – {results.misc.topThrowCount}</p>
+          </div>
+
+          <div className="card">
+            <h3>Best Win Streak</h3>
+            <p>{results.misc.bestWinStreak}</p>
+          </div>
+
+        </div>
+
       </div>
     )}
   </div>

@@ -4,17 +4,15 @@
   "description": "Desktop UI for analyzing Slippi replays with a user-friendly interface.",
   "author": "Riley",
   "license": "MIT",
-
   "main": "main.js",
-
   "scripts": {
-    "start": "set NODE_ENV=production && electron .",
     "dev": "vite",
+    "start": "cross-env NODE_ENV=development electron .",
     "build": "vite build",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "dev:electron": "npm run dev & wait-on http://localhost:5173 && npm run start"
   },
-
   "dependencies": {
     "@slippi/slippi-js": "^6.0.0",
     "electron-squirrel-startup": "^1.0.1",
@@ -22,7 +20,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
-
   "devDependencies": {
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.22.20",
@@ -36,8 +33,10 @@
     "@electron-forge/plugin-fuses": "^7.10.2",
     "@electron/fuses": "^1.8.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "cross-env": "^10.1.0",
     "electron": "^30.5.1",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.2.0"
+    "vite": "^5.2.0",
+    "wait-on": "^9.0.1"
   }
 }
