@@ -31,9 +31,10 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         draft: false
+        prerelease: false
         files: |
-          out/make/squirrel.windows/*.exe
-          out/make/squirrel.windows/*.nupkg
-          out/make/squirrel.windows/RELEASES
+          out/make/squirrel.windows/**/*.exe
+          out/make/squirrel.windows/**/*.nupkg
+          out/make/squirrel.windows/**/RELEASES
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

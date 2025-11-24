@@ -9,4 +9,9 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("progress-update", (_event, data) => callback(data));
   },
   onMatchLog: (cb) => ipcRenderer.on("match-log", (_, data) => cb(data)),
+  update: {
+    onAvailable: (cb) => ipcRenderer.on("update-available", cb),
+    onDownloaded: (cb) => ipcRenderer.on("update-downloaded", cb),
+    quitAndInstall: () => ipcRenderer.invoke("quit-and-install")
+  }
 });

@@ -29,6 +29,8 @@ function App() {
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
   const [matchLogs, setMatchLogs] = useState([]);
   const [rankedOnly, setRankedOnly] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
 
   const selectFolder = async () => {
     const selected = await window.api.selectFolder();
@@ -52,6 +54,15 @@ function App() {
       localStorage.setItem("replayFolder", folder);
     }
   }, [folder]);
+
+  React.useEffect(() => {
+    window.api.update.onAvailable(() => {
+      setUpdateAvailable(true);
+    });
+    window.api.update.onDownloaded(() => {
+      setUpdateReady(true);
+    });
+  }, []);
 
   React.useEffect(() => {
     const unsub = window.api.onMatchLog((msg) => {
@@ -93,6 +104,24 @@ function App() {
   return (
     <div className="container">
     <div style={{ padding: "2rem", fontFamily: "sans-serif", maxWidth: 800 }}>
+      {updateAvailable && (
+        <div style={{ background: "#ffcc00", padding: "1rem", marginBottom: "1rem" }}>
+          A new update is downloading...
+        </div>
+      )}
+
+      {updateReady && (
+        <div style={{ background: "#4ade80", padding: "1rem", marginBottom: "1rem" }}>
+          Update ready!  
+          <button
+            style={{ marginLeft: "1rem" }}
+            onClick={() => window.api.update.quitAndInstall()}
+          >
+            Restart & Install
+          </button>
+        </div>
+      )}
+
       <h1>Slippi Stats Desktop</h1>
 
       <button onClick={selectFolder}>Select Replay Folder</button>

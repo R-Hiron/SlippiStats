@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { analyzeReplays, cancelAnalysis } = require("./src/backend/statsProcessor");
+const { autoUpdater } = require("electron-updater");
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -49,6 +50,25 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  autoUpdater.autoDownload = true;
+
+  autoUpdater.on("update-available", () => {
+    if (mainWindow) {
+      mainWindow.webContents.send("update-available");
+    }
+  });
+
+  autoUpdater.on("update-downloaded", () => {
+    if (mainWindow) {
+      mainWindow.webContents.send("update-downloaded");
+    }
+  });
+
+  autoUpdater.on("error", (err) => {
+    console.error("Update error:", err);
+  });
+
+  autoUpdater.checkForUpdatesAndNotify();
 
   ipcMain.handle("select-folder", async () => {
     const result = await dialog.showOpenDialog({ properties: ["openDirectory"] });
@@ -68,6 +88,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle("cancel-analysis", () => {
     cancelAnalysis();
+  });
+
+  ipcMain.handle("quit-and-install", () => {
+    autoUpdater.quitAndInstall();
   });
 });
 

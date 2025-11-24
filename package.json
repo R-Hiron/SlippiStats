@@ -1,8 +1,18 @@
 {
   "name": "slippi-stats-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "build": {
+      "appId": "com.slippistats.desktop",
+      "publish": [
+        {
+          "provider": "github",
+          "owner": "R-Hiron",
+          "repo": "SlippiStats"
+        }
+      ]
+  },
   "description": "Desktop UI for analyzing Slippi replays with a user-friendly interface.",
-  "author": "Riley",
+  "author": "Riley Hiron",
   "license": "MIT",
   "main": "main.js",
   "scripts": {
@@ -16,6 +26,7 @@
   "dependencies": {
     "@slippi/slippi-js": "^6.0.0",
     "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.6.2",
     "glob": "^10.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
