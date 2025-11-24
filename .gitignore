@@ -27,4 +27,4 @@ Thumbs.db
 app/*.asar
 
 # Test Files
-app/tests/
+testing/

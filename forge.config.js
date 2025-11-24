@@ -5,8 +5,8 @@ const { FuseV1Options, FuseVersion } = require("@electron/fuses");
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: path.resolve(__dirname, "icon.ico"), // optional — remove if you don’t have one yet
-    extraResource: [path.resolve(__dirname, "dist")], // ensures Vite build is included
+    icon: path.resolve(__dirname, "icon.ico"), 
+    extraResource: [path.resolve(__dirname, "dist")],
   },
   rebuildConfig: {},
   makers: [
