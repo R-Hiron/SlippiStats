@@ -8,24 +8,38 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
+    - name: Show workspace contents
+      run: |
+        echo "GITHUB_WORKSPACE: $env:GITHUB_WORKSPACE"
+        dir
+      shell: powershell
+    
     - name: Use Node.js 18
       uses: actions/setup-node@v3
       with:
         node-version: 18
-
+    
     - name: Install dependencies
-      run: npm install
-
+      run: npm ci
+      working-directory: .
+    
     - name: Build Vite frontend
       run: npm run build
-
+      working-directory: .
+    
     - name: Package Electron app
       run: npm run make
+      working-directory: .
 
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v1
