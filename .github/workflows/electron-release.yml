@@ -1,5 +1,8 @@
 name: Build & Publish Slippi Stats Desktop
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
