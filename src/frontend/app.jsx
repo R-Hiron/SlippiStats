@@ -131,7 +131,7 @@ function App() {
       </p>
 
       <input
-        placeholder="Enter Player Tag (e.g. RILY#420)"
+        placeholder="Enter Player Tag (e.g. GLTY#837)"
         value={tag}
         onChange={(e) => setTag(e.target.value)}
         style={{ display: "block", margin: "0.5rem 0", width: "100%" }}
