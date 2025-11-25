@@ -1,8 +1,11 @@
 {
   "name": "slippi-stats-desktop",
-  "version": "1.0.6",
+  "version": "1.0.8",
+  "description": "Desktop UI for analyzing Slippi replay stats with a user-friendly interface.",
+  "author": "Riley Hiron",
   "build": {
-    "appId": "com.slippistats.desktop",
+    "appId": "com.rileyhiron.slippistats",
+    "productName": "Slippi Stats Desktop",
     "directories": {
       "output": "release"
     },
@@ -10,24 +13,37 @@
       "dist/**/*",
       "main.js",
       "preload.js",
-      "package.json",
-      "src/**/*"
+      "src/backend/**/*"
     ],
     "win": {
-      "target": "squirrel"
-    }
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "R-Hiron",
+        "repo": "SlippiStats"
+      }
+    ]
   },
-  "description": "Desktop UI for analyzing Slippi replays with a user-friendly interface.",
-  "author": "Riley Hiron",
   "license": "MIT",
   "main": "main.js",
   "scripts": {
     "dev": "vite",
     "start": "cross-env NODE_ENV=development electron .",
     "build": "vite build",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "dist": "electron-builder --win",
+    "dist": "electron-builder",
     "dev:electron": "npm run dev & wait-on http://localhost:5173 && npm run start"
   },
   "dependencies": {
@@ -42,13 +58,6 @@
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.22.20",
     "@babel/preset-react": "^7.22.15",
-    "@electron-forge/cli": "^7.10.2",
-    "@electron-forge/maker-deb": "^7.10.2",
-    "@electron-forge/maker-rpm": "^7.10.2",
-    "@electron-forge/maker-squirrel": "^7.10.2",
-    "@electron-forge/maker-zip": "^7.10.2",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
-    "@electron-forge/plugin-fuses": "^7.10.2",
     "@electron/fuses": "^1.8.0",
     "@vitejs/plugin-react": "^5.1.0",
     "cross-env": "^10.1.0",

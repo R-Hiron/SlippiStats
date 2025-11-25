@@ -1,3 +1,5 @@
+console.log("🌈 [RENDERER] app.jsx loaded at", new Date().toISOString());
+
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./app.css";
@@ -100,6 +102,12 @@ function App() {
       setLoading(false);
     }
   };
+
+  window.api?.getVersion?.().then(v => {
+    console.log("🌈 [RENDERER] Version from preload:", v);
+  }).catch(err => {
+    console.error("🌈 [RENDERER] Version call failed:", err);
+  });
 
   return (
     <div className="container">

@@ -1,3 +1,5 @@
+console.log("💫 [PRELOAD] Preload script running inside sandbox.");
+
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {

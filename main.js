@@ -1,12 +1,18 @@
+console.log("🔥 [MAIN] Loaded main.js from:", __dirname);
+console.log("🔥 [MAIN] Timestamp:", new Date().toISOString());
+
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { analyzeReplays, cancelAnalysis } = require("./src/backend/statsProcessor");
-const { autoUpdater } = require("electron-updater");
+const { autoUpdater, AppUpdater } = require("electron-updater");
 
 const isDev = process.env.NODE_ENV === "development";
 
 let mainWindow;
+
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -19,7 +25,7 @@ function createWindow() {
       sandbox: true,
     },
   });
-
+  console.log("🔥 [MAIN] BrowserWindow created. WebPreferences:", mainWindow.webContents.getLastWebPreferences());
   const distPath = path.join(__dirname, "dist", "index.html");
 
   if (isDev || process.env.NODE_ENV === "development") {
@@ -48,9 +54,9 @@ function createWindow() {
   });
 }
 
+
 app.whenReady().then(() => {
   createWindow();
-  autoUpdater.autoDownload = true;
 
   autoUpdater.on("update-available", () => {
     if (mainWindow) {
@@ -94,8 +100,10 @@ app.whenReady().then(() => {
     autoUpdater.quitAndInstall();
   });
   ipcMain.handle("get-version", () => {
+    console.log("🔥 [MAIN] get-version IPC called!");
     return app.getVersion();
   });
+
 
 });
 
