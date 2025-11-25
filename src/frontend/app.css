@@ -1,4 +1,4 @@
-:root {
+:root[data-theme="dark"] {
   --bg-dark: #151515;
   --bg-panel: #1f1f1f;
   --bg-card: #2a2a2a;
@@ -6,6 +6,32 @@
   --text-muted: #aaa;
   --accent: #4a90e2;
   --accent-hover: #357abd;
+  --good: #4ade80;
+  --bad: #f87171;
+}
+
+:root[data-theme="light"] {
+  --bg-dark: #f4f4f4;
+  --bg-panel: #ffffff;
+  --bg-card: #eaeaea;
+  --text-main: #222;
+  --text-muted: #555;
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --good: #22c55e;
+  --bad: #dc2626;
+  --neutral: #9ca3af;
+  --radius: 8px;
+}
+
+:root[data-theme="slippi"] {
+  --bg-dark: #1b0b28;
+  --bg-panel: #310057;
+  --bg-card: #271733;
+  --text-main: #d0d7ff;
+  --text-muted: #8f97c7;
+  --accent: #20ba44;
+  --accent-hover: #27964d;
   --good: #4ade80;
   --bad: #f87171;
   --neutral: #9ca3af;
@@ -109,13 +135,13 @@ input {
   border-bottom: 1px solid #333;
 }
 .table th {
-  background: #262626;
+  background: var(--bg-panel);
   color: var(--accent);
   text-align: left;
   font-weight: 600;
 }
 .table tr:hover td {
-  background: #242424;
+  background: var(--bg-card);
 }
 .winrate-good {
   color: var(--good);
@@ -191,21 +217,18 @@ h1 {
   opacity: 0.8;
 }
 
-/* Hide scrollbars globally */
 ::-webkit-scrollbar {
   display: none;
 }
 
-/* Prevent window-level scrollbars */
 html, body {
   overflow: hidden;
   overflow-y: scroll;
   height: 100%;
 }
 
-/* Allow internal sections to scroll invisibly if needed */
 .scroll-area {
   overflow-y: scroll;
-  scrollbar-width: none; /* for Firefox */
+  scrollbar-width: none;
 }
 

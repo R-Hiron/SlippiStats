@@ -34,6 +34,9 @@ function App() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+
 
 
   const selectFolder = async () => {
@@ -47,6 +50,11 @@ function App() {
     });
     return unsubscribe;
   }, []);
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   React.useEffect(() => {
     if (tag) {
@@ -132,6 +140,62 @@ function App() {
           >
             Restart & Install
           </button>
+        </div>
+      )}
+
+      <div
+        style={{
+          position: "fixed",
+          top: "10px",
+          right: "10px",
+          background: "var(--bg-panel)",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          userSelect: "none",
+          zIndex: 1000,
+        }}
+        onClick={() => setSettingsOpen((prev) => !prev)}
+      >
+        ⚙️
+      </div>
+
+      {settingsOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: "60px",
+            right: "10px",
+            width: "220px",
+            background: "var(--bg-panel)",
+            border: "1px solid #333",
+            borderRadius: "8px",
+            padding: "1rem",
+            zIndex: 999,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Settings</h3>
+
+          <label style={{ display: "block", marginBottom: "0.5rem" }}>
+            Theme:
+          </label>
+          <select
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              borderRadius: "6px",
+              background: "var(--bg-card)",
+              color: "var(--text-main)",
+              border: "1px solid #444",
+            }}
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+          >
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="slippi">Slippi Theme</option>
+          </select>
         </div>
       )}
 
