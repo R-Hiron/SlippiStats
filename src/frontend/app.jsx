@@ -67,7 +67,6 @@ function App() {
     });
     window.api.update.onDownloaded(() => {
       setUpdateMessage("Update ready! Restarting...");
-      window.api.update.install();
       setUpdateReady(true);
     });
   }, []);
@@ -361,43 +360,43 @@ function App() {
           <div className="card">
             <h3>L-Cancel Rate</h3>
             <p>{results.misc.avgLcancelRate}</p>
-            <h5>Succeeded / Failed L-Cancels</h5>
-            <h4>{results.misc.lCancelSuccessTotal} / {results.misc.lCancelFailTotal}</h4>
+            <h3>Succeeded / Failed L-Cancels</h3>
+            <h5>{results.misc.lCancelSuccessTotal} / {results.misc.lCancelFailTotal}</h5>
           </div>
 
           <div className="card">
+            <h3>Average per Game</h3>
+            <p>{results.misc.avgWavedashes}</p>
             <h3>Total Wavedashes</h3>
-            <p>{results.misc.wavedashTotal}</p>
-            <h5>Average per Game</h5>
-            <h4>{results.misc.avgWavedashes}</h4>
+            <h5>{results.misc.wavedashTotal}</h5>
           </div>
 
           <div className="card">
+            <h3>Average per Game</h3>
+            <p>{results.misc.avgRolls}</p>
             <h3>Total Rolls</h3>
-            <p>{results.misc.rollTotal}</p>
-            <h5>Average per Game</h5>
-            <h4>{results.misc.avgRolls}</h4>
+            <h5>{results.misc.rollTotal}</h5>
           </div>
 
           <div className="card">
-            <h3>Ledge Grabs</h3>
-            <p>{results.misc.ledgegrabTotal}</p>
-            <h5>Average per Game</h5>
-            <h4>{results.misc.avgLedgegrabs}</h4>
+            <h3>Average per Game</h3>
+            <p>{results.misc.avgLedgegrabs}</p>
+            <h3>Total Ledge Grabs</h3>
+            <h5>{results.misc.ledgegrabTotal}</h5>
           </div>
 
           <div className="card">
-            <h3>Dash Dances</h3>
-            <p>{results.misc.dashDanceTotal}</p>
-            <h5>Average per Game</h5>
-            <h4>{results.misc.avgDashDances}</h4>
+            <h3>Average per Game</h3>
+            <p>{results.misc.avgDashDances}</p>
+            <h3>Total Dash Dances</h3>
+            <h5>{results.misc.dashDanceTotal}</h5>
           </div>
 
           <div className="card">
             <h3>Tech Success Rate</h3>
             <p>{results.misc.techSuccessRate}</p>
-            <h5>Succeeded / Failed L-Cancels</h5>
-            <h4>{results.misc.techSuccessTotal} / {results.misc.techFailTotal}</h4>
+            <h3>Succeeded / Failed Techs</h3>
+            <h5>{results.misc.techSuccessTotal} / {results.misc.techFailTotal}</h5>
           </div>
 
           <div className="card">
