@@ -93,6 +93,10 @@ app.whenReady().then(() => {
   ipcMain.handle("quit-and-install", () => {
     autoUpdater.quitAndInstall();
   });
+  ipcMain.handle("get-version", () => {
+    return app.getVersion();
+  });
+
 });
 
 app.on("window-all-closed", () => {

@@ -1,15 +1,30 @@
 {
   "name": "slippi-stats-desktop",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "build": {
-      "appId": "com.slippistats.desktop",
-      "publish": [
-        {
-          "provider": "github",
-          "owner": "R-Hiron",
-          "repo": "SlippiStats"
-        }
-      ]
+    "appId": "com.slippistats.desktop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js",
+      "package.json",
+      "src/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "R-Hiron",
+        "repo": "SlippiStats",
+        "channel": "latest",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "target": "squirrel"
+    }
   },
   "description": "Desktop UI for analyzing Slippi replays with a user-friendly interface.",
   "author": "Riley Hiron",
@@ -21,6 +36,7 @@
     "build": "vite build",
     "package": "electron-forge package",
     "make": "electron-forge make",
+    "dist": "electron-builder --win",
     "dev:electron": "npm run dev & wait-on http://localhost:5173 && npm run start"
   },
   "dependencies": {
@@ -46,6 +62,7 @@
     "@vitejs/plugin-react": "^5.1.0",
     "cross-env": "^10.1.0",
     "electron": "^30.5.1",
+    "electron-builder": "^26.0.12",
     "tailwindcss": "^3.4.1",
     "vite": "^5.2.0",
     "wait-on": "^9.0.1"

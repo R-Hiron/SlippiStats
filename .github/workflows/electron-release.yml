@@ -50,8 +50,9 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          out/make/squirrel.windows/**/*.exe
-          out/make/squirrel.windows/**/*.nupkg
-          out/make/squirrel.windows/**/RELEASES
+          release/squirrel-windows/*.exe
+          release/squirrel-windows/*.nupkg
+          release/squirrel-windows/RELEASES
+
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
