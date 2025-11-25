@@ -1,6 +1,6 @@
 {
   "name": "slippi-stats-desktop",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "build": {
     "appId": "com.slippistats.desktop",
     "directories": {
@@ -12,15 +12,6 @@
       "preload.js",
       "package.json",
       "src/**/*"
-    ],
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "R-Hiron",
-        "repo": "SlippiStats",
-        "channel": "latest",
-        "releaseType": "release"
-      }
     ],
     "win": {
       "target": "squirrel"
