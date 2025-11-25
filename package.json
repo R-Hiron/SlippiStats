@@ -1,6 +1,6 @@
 {
   "name": "slippi-stats-desktop",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "build": {
     "appId": "com.slippistats.desktop",
     "directories": {

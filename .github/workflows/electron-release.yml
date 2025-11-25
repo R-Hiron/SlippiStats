@@ -41,7 +41,7 @@ jobs:
       working-directory: .
     
     - name: Package Electron app
-      run: npm run make
+      run: npm run dist
       working-directory: .
 
     - name: Upload Release Assets
