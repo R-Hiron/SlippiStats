@@ -22,14 +22,7 @@ jobs:
     - name: Build Vite frontend
       run: npm run build
 
-    - name: Build Electron (NSIS)
+    - name: Build Electron + Publish (NSIS)
       run: npm run dist
-
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          release/*.exe
-          release/latest.yml
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
