@@ -14,7 +14,8 @@ contextBridge.exposeInMainWorld("api", {
   update: {
     onAvailable: (cb) => ipcRenderer.on("update-available", cb),
     onDownloaded: (cb) => ipcRenderer.on("update-downloaded", cb),
-    quitAndInstall: () => ipcRenderer.invoke("quit-and-install")
+    downloadUpdate: () => ipcRenderer.invoke("download-update"),
+    install: () => ipcRenderer.invoke("quit-and-install"),
   },
   getVersion: () => ipcRenderer.invoke("get-version"),
 });

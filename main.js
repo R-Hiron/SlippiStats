@@ -99,6 +99,10 @@ app.whenReady().then(() => {
   ipcMain.handle("quit-and-install", () => {
     autoUpdater.quitAndInstall();
   });
+  ipcMain.handle("download-update", () => {
+    console.log("🔥 [MAIN] Downloading update...");
+    return autoUpdater.downloadUpdate();
+  });
   ipcMain.handle("get-version", () => {
     console.log("🔥 [MAIN] get-version IPC called!");
     return app.getVersion();
