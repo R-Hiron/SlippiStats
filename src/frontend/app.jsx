@@ -195,6 +195,7 @@ function App() {
             <option value="dark">Dark</option>
             <option value="light">Light</option>
             <option value="slippi">Slippi Theme</option>
+            <option value="Sandon05">Sandon05 Theme</option>
           </select>
         </div>
       )}
