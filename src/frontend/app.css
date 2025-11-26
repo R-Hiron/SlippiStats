@@ -37,6 +37,19 @@
   --neutral: #9ca3af;
   --radius: 8px;
 }
+:root[data-theme="Sandon05"] {
+  --bg-dark: #fff8d5;
+  --bg-panel: #efdfd8;
+  --bg-card: #cfac94;
+  --text-main: #222;
+  --text-muted: #555;
+  --accent: #9dd6ad;
+  --accent-hover: #96caa3;
+  --good: #a5e3e0;
+  --bad: #ffa4a9;
+  --neutral: #cfcfc4;
+  --radius: 8px;
+}
 
 body {
   margin: 0;
