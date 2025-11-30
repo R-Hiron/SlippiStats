@@ -25,7 +25,15 @@ function App() {
   const [tag, setTag] = useState(() => {
     return localStorage.getItem("playerTag") || "";
   });
-  const [character, setCharacter] = useState("");
+  const [opponentTag, setOpponentTag] = useState("");
+  const [charactersSelected, setCharactersSelected] = useState([]);
+  const [opponentCharactersSelected, setOpponentCharactersSelected] = useState([]);
+  const allCharacters = [
+    "Fox","Falco","Marth","Sheik","Captain_Falcon","Jigglypuff","Peach","Pikachu",
+    "Ice_Climbers","Samus","Yoshi","Luigi","Mario","Dr_Mario","Donkey_Kong",
+    "Link","Zelda","Ganondorf","Young_Link","Mewtwo","Mr_Game_And_Watch","Roy",
+    "Pichu","Kirby","Bowser","Ness"
+  ];
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
@@ -86,6 +94,14 @@ function App() {
     return unsub;
   }, []);
 
+  function iconName(str) {
+    return str
+      .replace(/\./g, "")
+      .replace(/&/g, "And")
+      .trim()
+      .replace(/\s+/g, "_");
+  }
+
   const analyze = async () => {
     if (!folder || !tag) {
       alert("Please select a folder and enter your tag first.");
@@ -97,13 +113,12 @@ function App() {
 
     const options = {
       playerTags: [tag],
-      opponentTags: [],
+      opponentTags: opponentTag ? [opponentTag] : [],
       ignoredOpponents: [],
-      playerCharacter: character || null,
-      opponentCharacter: null,
+      playerCharacter: charactersSelected.length > 0 ? charactersSelected : null,
+      opponentCharacter: opponentCharactersSelected.length > 0 ? opponentCharactersSelected : null,
       rankedOnly,
     };
-
     try {
       const res = await window.api.analyzeReplays(folder, options);
       console.log("Analysis Results:", res);
@@ -121,6 +136,106 @@ function App() {
   }).catch(err => {
     console.error("🌈 [RENDERER] Version call failed:", err);
   });
+
+  function CharacterDropdown({ allCharacters, selected, setSelected }) {
+    const [open, setOpen] = useState(false);
+
+    const toggleChar = (c) => {
+      if (selected.includes(c)) {
+        setSelected(selected.filter(x => x !== c));
+      } else {
+        setSelected([...selected, c]);
+      }
+    };
+
+    return (
+      <div style={{ marginBottom: "1rem", position: "relative" }}>
+        <div
+          onClick={() => setOpen(!open)}
+          style={{
+            padding: "0.6rem",
+            background: "var(--bg-panel)",
+            borderRadius: 6,
+            border: "1px solid #333",
+            cursor: "pointer",
+          }}
+        >
+          {selected.length === 0 ? "Filter by Character..." : `${selected.length} selected`}
+        </div>
+
+        {open && (
+          <div
+            style={{
+              position: "absolute",
+              top: "110%",
+              left: 0,
+              width: "100%",
+              maxHeight: "200px",
+              overflowY: "auto",
+              background: "var(--bg-card)",
+              border: "1px solid #444",
+              borderRadius: 6,
+              zIndex: 999,
+            }}
+          >
+            {allCharacters.map((c) => (
+              <div
+                key={c}
+                onClick={() => toggleChar(c)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "6px 8px",
+                  cursor: "pointer",
+                  background: selected.includes(c) ? "rgba(0,0,0,0.1)" : "transparent"
+                }}
+              >
+                <img
+                  src={`./StockIcons/${c}.png`}
+                  style={{ width: 20, height: 20, marginRight: 8 }}
+                />
+                {c.replace(/_/g, " ")}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Selected tags */}
+        <div style={{ display: "flex", flexWrap: "wrap", marginTop: "8px", gap: "6px" }}>
+          {selected.map((c) => (
+            <div
+              key={c}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: "var(--accent)",
+                padding: "4px 8px",
+                borderRadius: 20,
+                color: "white",
+                fontSize: "0.85rem",
+              }}
+            >
+              <img
+                src={`./StockIcons/${c}.png`}
+                style={{ width: 20, height: 20, marginRight: 8 }}
+              />
+              {c.replace(/_/g, " ")}
+              <span
+                onClick={() => setSelected(selected.filter(x => x !== c))}
+                style={{
+                  marginLeft: 6,
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                ✕
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -215,16 +330,43 @@ function App() {
         onChange={(e) => setTag(e.target.value)}
         style={{ display: "block", margin: "0.5rem 0", width: "100%" }}
       />
-      <input id="rankedOnly" type="checkbox" checked={rankedOnly} onChange={(e) => setRankedOnly(e.target.checked)} />
-      <label htmlFor="rankedOnly">Ranked Only</label>
-
-
-      <input
-        placeholder="Character (optional)"
-        value={character}
-        onChange={(e) => setCharacter(e.target.value)}
-        style={{ display: "block", marginBottom: "1rem", width: "100%" }}
+      <CharacterDropdown
+        allCharacters={allCharacters}
+        selected={charactersSelected}
+        setSelected={setCharactersSelected}
       />
+      <input
+        placeholder="Filter Opponent Tag (optional)"
+        value={opponentTag}
+        onChange={(e) => setOpponentTag(e.target.value)}
+        style={{ display: "block", margin: "0.5rem 0", width: "100%" }}
+      />
+      <CharacterDropdown
+        allCharacters={allCharacters}
+        selected={opponentCharactersSelected}
+        setSelected={setOpponentCharactersSelected}
+      />
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        margin: "0.5rem 0"
+      }}>
+        <input
+          id="rankedOnly"
+          type="checkbox"
+          checked={rankedOnly}
+          onChange={(e) => setRankedOnly(e.target.checked)}
+          style={{
+            width: "18px",
+            height: "18px",
+            cursor: "pointer"
+          }}
+        />
+        <label htmlFor="rankedOnly" style={{ cursor: "pointer" }}>
+          Ranked Only
+        </label>
+      </div>
       <button onClick={analyze} disabled={loading}>
         {loading ? "Analyzing..." : "Analyze"}
       </button>
@@ -377,6 +519,10 @@ function App() {
           Object.entries(results.matchups).map(([char, opponents]) => (
             <details key={char} style={{ marginBottom: "1rem" }}>
               <summary>
+                <img
+                  src={`./StockIcons/${iconName(char)}.png`}
+                  style={{ width: 20, height: 20, marginRight: 8 }}
+                />
                 {char}
                 {formatPlaytime(results.characterPlaytime?.[char]) && (
                   <span style={{ marginLeft: '0.5rem', color: '#ccc', fontWeight: 'normal' }}>
@@ -404,7 +550,13 @@ function App() {
                         : "winrate-neutral";
                     return (
                       <tr key={opp}>
-                        <td>{opp}</td>
+                        <td>
+                          <img
+                            src={`./StockIcons/${iconName(opp)}.png`}
+                            style={{ width: 20, height: 20, marginRight: 8 }}
+                          />
+                          {opp}
+                        </td>
                         <td>{data.games}</td>
                         <td>{data.wins}</td>
                         <td className={color}>{rate}%</td>
@@ -423,6 +575,7 @@ function App() {
         <div className="summary-cards">
 
           <div className="card">
+            <h1 className="StatsHeaders">L-Cancels</h1>
             <h3>L-Cancel Rate</h3>
             <p>{results.misc.avgLcancelRate}</p>
             <h3>Succeeded / Failed L-Cancels</h3>
@@ -430,6 +583,7 @@ function App() {
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Wavedashes</h1>
             <h3>Average per Game</h3>
             <p>{results.misc.avgWavedashes}</p>
             <h3>Total Wavedashes</h3>
@@ -437,6 +591,7 @@ function App() {
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Rolls</h1>
             <h3>Average per Game</h3>
             <p>{results.misc.avgRolls}</p>
             <h3>Total Rolls</h3>
@@ -444,6 +599,7 @@ function App() {
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Ledge Grabs</h1>
             <h3>Average per Game</h3>
             <p>{results.misc.avgLedgegrabs}</p>
             <h3>Total Ledge Grabs</h3>
@@ -451,6 +607,7 @@ function App() {
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Dash Dances</h1>
             <h3>Average per Game</h3>
             <p>{results.misc.avgDashDances}</p>
             <h3>Total Dash Dances</h3>
@@ -458,6 +615,7 @@ function App() {
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Techs</h1>
             <h3>Tech Success Rate</h3>
             <p>{results.misc.techSuccessRate}</p>
             <h3>Succeeded / Failed Techs</h3>
@@ -465,16 +623,19 @@ function App() {
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Stocks</h1>
             <h3>Stocks Taken / Lost</h3>
             <p>{results.misc.totalStocksTaken} / {results.misc.totalStocksLost}</p>
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Throws</h1>
             <h3>Most Used Throw</h3>
             <p>{results.misc.topThrowDir.toUpperCase()} – {results.misc.topThrowCount}</p>
           </div>
 
           <div className="card">
+            <h1 className="StatsHeaders">Streaks</h1>
             <h3>Best Win Streak</h3>
             <p>{results.misc.bestWinStreak}</p>
           </div>

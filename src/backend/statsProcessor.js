@@ -87,14 +87,19 @@ function isIgnoredOpponent(identity, ignoredLower) {
 }
 
 // Character Filter Resolver
-function resolveCharacterFilter(requestedCharLower) {
-  if (!requestedCharLower) return null;
-  const idx = characters_lowercase.indexOf(requestedCharLower.toLowerCase());
-  if (idx === -1) {
-    return null;
-  }
-  return { num: idx, name: characters[idx] };
+function resolveCharacterFilter(charList) {
+  if (!charList || charList.length === 0) return null;
+
+  const resolved = charList
+    .map(c => {
+      const idx = characters_lowercase.indexOf(c.toLowerCase());
+      return idx === -1 ? null : { num: idx, name: characters[idx] };
+    })
+    .filter(Boolean);
+
+  return resolved.length > 0 ? resolved : null;
 }
+
 
 // Replay File Hashing & Caching (Checks if file has been processed before)
 function hashReplayFile(filePath) {
@@ -234,10 +239,9 @@ function processSingleReplay({
     const playerCharName = characters[playerCharId] || "Unknown";
     const oppCharName = characters[oppCharId] || "Unknown";
 
-    // Apply character filters
     if (
       playerCharacterFilter &&
-      playerCharacterFilter.num !== playerCharId
+      !playerCharacterFilter.some(c => c.num === playerCharId)
     ) {
       return {
         total_seconds,
@@ -247,13 +251,14 @@ function processSingleReplay({
 
     if (
       opponentCharacterFilter &&
-      opponentCharacterFilter.num !== oppCharId
+      !opponentCharacterFilter.some(c => c.num === oppCharId)
     ) {
       return {
         total_seconds,
         game_seconds: 0
       };
     }
+
 
     // game validation checks
     const latestPercPlayer = latestFramePercents[playerIndex];

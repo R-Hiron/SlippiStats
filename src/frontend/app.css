@@ -2,6 +2,7 @@
   --bg-dark: #151515;
   --bg-panel: #1f1f1f;
   --bg-card: #2a2a2a;
+  --card-accent: #b7b7b7;
   --text-main: #e0e0e0;
   --text-muted: #aaa;
   --accent: #4a90e2;
@@ -14,6 +15,7 @@
   --bg-dark: #f4f4f4;
   --bg-panel: #ffffff;
   --bg-card: #eaeaea;
+  --card-accent: #b7b7b7;
   --text-main: #222;
   --text-muted: #555;
   --accent: #4a90e2;
@@ -28,6 +30,7 @@
   --bg-dark: #1b0b28;
   --bg-panel: #310057;
   --bg-card: #271733;
+  --card-accent: #b984bb;
   --text-main: #d0d7ff;
   --text-muted: #8f97c7;
   --accent: #20ba44;
@@ -41,6 +44,7 @@
   --bg-dark: #fff8d5;
   --bg-panel: #efdfd8;
   --bg-card: #cfac94;
+  --card-accent: #1e245d;
   --text-main: #222;
   --text-muted: #555;
   --accent: #9dd6ad;
@@ -109,6 +113,12 @@ input {
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+.StatsHeaders {
+  text-align: center;
+  text-decoration: underline var(--card-accents);
+  color: var(--card-accent);
+  font-size: medium;
 }
 .card {
   flex: 1;
