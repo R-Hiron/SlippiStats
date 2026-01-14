@@ -44,6 +44,7 @@ function App() {
   const [updateMessage, setUpdateMessage] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+  const [openMatchupRows, setOpenMatchupRows] = useState(() => new Set());
 
 
 
@@ -100,6 +101,15 @@ function App() {
       .replace(/&/g, "And")
       .trim()
       .replace(/\s+/g, "_");
+  }
+ 
+  function toggleMatchupRow(key) {
+    setOpenMatchupRows(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   const analyze = async () => {
@@ -543,24 +553,87 @@ function App() {
                   {Object.entries(opponents).map(([opp, data]) => {
                     const rate = Math.round((data.wins / data.games) * 100);
                     const color =
-                      rate >= 60
-                        ? "winrate-good"
-                        : rate < 40
-                        ? "winrate-bad"
-                        : "winrate-neutral";
+                      rate >= 60 ? "winrate-good" : rate < 40 ? "winrate-bad" : "winrate-neutral";
+
+                    const rowKey = `${char}::${opp}`;
+                    const isOpen = openMatchupRows.has(rowKey);
+                    const stagesObj = data.stages || {};
+                    const stageRows = Object.entries(stagesObj)
+                      .map(([stageName, s]) => {
+                        const sr = s.games ? Math.round((s.wins / s.games) * 100) : 0;
+                        return {
+                          stageName,
+                          games: s.games || 0,
+                          wins: s.wins || 0,
+                          winrate: sr,
+                          totalSeconds: s.totalSeconds || 0,
+                        };
+                      })
+                      .sort((a, b) => b.games - a.games);
+
                     return (
-                      <tr key={opp}>
-                        <td>
-                          <img
-                            src={`./StockIcons/${iconName(opp)}.png`}
-                            style={{ width: 20, height: 20, marginRight: 8 }}
-                          />
-                          {opp}
-                        </td>
-                        <td>{data.games}</td>
-                        <td>{data.wins}</td>
-                        <td className={color}>{rate}%</td>
-                      </tr>
+                      <React.Fragment key={rowKey}>
+                        <tr
+                          onClick={() => toggleMatchupRow(rowKey)}
+                          style={{ cursor: "pointer" }}
+                          title="Click to view stage breakdown"
+                        >
+                          <td>
+                            <img
+                              src={`./StockIcons/${iconName(opp)}.png`}
+                              style={{ width: 20, height: 20, marginRight: 8 }}
+                            />
+                            {opp}
+                          </td>
+                          <td>{data.games}</td>
+                          <td>{data.wins}</td>
+                          <td className={color}>{rate}%</td>
+                        </tr>
+
+                        {isOpen && (
+                          <tr>
+                            <td colSpan={4} style={{ padding: 0 }}>
+                              <div style={{ padding: "0 0 1rem 0", background: "var(--bg-dark)" }}>
+
+                                {stageRows.length === 0 ? (
+                                  <div style={{ color: "var(--text-muted)" }}>
+                                    No stage breakdown available (re-run analysis after updating backend).
+                                  </div>
+                                ) : (
+                                  <table className="table stage-breakdown" style={{ marginLeft: "1rem", marginBottom: 0 }}>
+                                    <thead>
+                                      <tr>
+                                        <th>Stage</th>
+                                        <th>Games</th>
+                                        <th>Wins</th>
+                                        <th>Winrate</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {stageRows.map((s) => {
+                                        const stageColor =
+                                          s.winrate >= 60
+                                            ? "winrate-good"
+                                            : s.winrate < 40
+                                            ? "winrate-bad"
+                                            : "winrate-neutral";
+                                        return (
+                                          <tr key={s.stageName}>
+                                            <td>{s.stageName}</td>
+                                            <td>{s.games}</td>
+                                            <td>{s.wins}</td>
+                                            <td className={stageColor}>{s.winrate}%</td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -638,6 +711,8 @@ function App() {
             <h1 className="StatsHeaders">Streaks</h1>
             <h3>Best Win Streak</h3>
             <p>{results.misc.bestWinStreak}</p>
+            <h3>Best Loss Streak</h3>
+            <h5>{results.misc.bestLossStreak}</h5>
           </div>
 
         </div>

@@ -365,8 +365,10 @@ async function analyzeReplays(folderPath, options = {}) {
   let totalStocksTaken = 0;
   let totalStocksLost = 0;
   let throwCounts = { up: 0, down: 0, forward: 0, back: 0 };
-  let currentStreak = 0;
+  let currentWinStreak = 0;
   let bestWinStreak = 0;
+  let currentLossStreak = 0;
+  let bestLossStreak = 0;
 
   const nickname_totals = {};
   const nickname_wins = {};
@@ -377,9 +379,10 @@ async function analyzeReplays(folderPath, options = {}) {
   const opponent_totals = {};
   const opponent_wins = {};
   const opponent_playtime = {};
-  const stage_totals = [];
-  const stage_wins = [];
-  const stage_playtime = [];
+  const stage_totals = {};
+  const stage_wins = {};
+  const stage_playtime = {};
+
 
   const character_head_to_head = Array(34).fill().map(() =>
     Array(34).fill().map((_, i) => [0, 0, characters[i]])
@@ -389,6 +392,8 @@ async function analyzeReplays(folderPath, options = {}) {
   let final_opponent_name = "";
   let real_player_code = "";
   let real_opponent_code = "";
+  let matchups = {};
+
 
   // File Discovery (Scan Folder for .slp files)
   const normalizedPath = path.resolve(folderPath);
@@ -500,7 +505,7 @@ async function analyzeReplays(folderPath, options = {}) {
       !stages[stageId]
     ) {
       skippedCount++;
-      return;
+      continue;
     }
 
     const stageName = stages[stageId];
@@ -513,7 +518,6 @@ async function analyzeReplays(folderPath, options = {}) {
     if (result.total_wins) stage_wins[stageName]++;
     stage_playtime[stageName] += result.game_seconds || 0;
 
-    if (!matchups) var matchups = {};
     const playerCharacter = result.player_character_name;
     const opponentCharacter = result.opponent_character_name;
 
@@ -541,58 +545,60 @@ async function analyzeReplays(folderPath, options = {}) {
         games: 0,
         wins: 0,
         totalSeconds: 0,
+        stages: {},
       };
     }
     matchups[playerCharacter][opponentCharacter].games++;
     if (result.total_wins) matchups[playerCharacter][opponentCharacter].wins++;
     matchups[playerCharacter][opponentCharacter].totalSeconds += result.game_seconds;
 
+    const stageNameForMatchup = result.stage_name || stages[result.stage_num] || "Unknown";
+    const stageMap = matchups[playerCharacter][opponentCharacter].stages;
+    if (!stageMap[stageNameForMatchup]) {
+      stageMap[stageNameForMatchup] = { games: 0, wins: 0, totalSeconds: 0 };
+    }
+    stageMap[stageNameForMatchup].games++;
+    if (result.total_wins) stageMap[stageNameForMatchup].wins++;
+    stageMap[stageNameForMatchup].totalSeconds += result.game_seconds || 0;
+
     // Misc. Stats #*#*#*# Needs Work #*#*#*#
     try {
         const stats = gameData.stats;
         const actions = stats?.actionCounts?.[result.player_index] || null;
 
-        // L-cancels
         if (actions?.lCancelCount) {
             lCancelSuccessTotal += actions.lCancelCount.success || 0;
             lCancelFailTotal += actions.lCancelCount.fail || 0;
         }
 
-        // Wavedashes
         if (actions?.wavedashCount !== undefined) {
             wavedashTotal += actions.wavedashCount || 0;
         }
 
-        // Rolls
         if (actions?.rollCount !== undefined) {
             rollTotal += actions.rollCount || 0;
         }
 
-        // Ledge grabs
         if (actions?.ledgegrabCount !== undefined) {
             ledgegrabTotal += actions.ledgegrabCount || 0;
         }
 
-        // Dash dances
         if (actions?.dashDanceCount !== undefined) {
             dashDanceTotal += actions.dashDanceCount || 0;
         }
 
-        // Teching (ground tech)
         if (actions?.groundTechCount) {
             const g = actions.groundTechCount;
             techSuccessTotal += (g.away || 0) + (g.in || 0) + (g.neutral || 0);
             techFailTotal += g.fail || 0;
         }
 
-        // Stocks
         const pIndex = result.player_index;
         const oIndex = result.opponent_index;
 
         totalStocksTaken += stats?.overall?.[pIndex]?.killCount || 0;
         totalStocksLost += stats?.overall?.[oIndex]?.killCount || 0;
 
-        // Throws
         if (actions?.throwCount) {
             throwCounts.up += actions.throwCount.up || 0;
             throwCounts.down += actions.throwCount.down || 0;
@@ -600,19 +606,19 @@ async function analyzeReplays(folderPath, options = {}) {
             throwCounts.back += actions.throwCount.back || 0;
         }
 
-        // Win streak
         if (result.total_wins) {
-            currentStreak++;
-            if (currentStreak > bestWinStreak) bestWinStreak = currentStreak;
+            currentWinStreak++;
+            if (currentWinStreak > bestWinStreak) bestWinStreak = currentWinStreak;
+            currentLossStreak = 0;
         } else {
-            currentStreak = 0;
+            currentLossStreak++;
+            if (currentLossStreak > bestLossStreak) bestLossStreak = currentLossStreak;
+            currentWinStreak = 0;
         }
     } catch (e) {
         console.warn("Misc stat parsing failed:", e.message);
     }
 
-
-    // Send match ticker event to UI
     const p1 = result.player_name || result.player_code || "P1";
     const p2 = result.opponent_name || result.opponent_code || "P2";
     const stage = stages[result.stage_num] || "Unknown";
@@ -640,14 +646,12 @@ async function analyzeReplays(folderPath, options = {}) {
 
   cancelRequested = false;
 
-  // Save updated cache to Disk
   writeCache(cacheFilePath, cache, {
     userPlayerArg: wantedPlayersLower.join(",")
   });
 
   cancelRequested = false;
 
-  // Handle case: no games found
   if (!total_games) {
     return {
       foundGames: false,
@@ -679,7 +683,6 @@ async function analyzeReplays(folderPath, options = {}) {
     ? ((total_wins / total_games) * 100).toFixed(2)
     : "0.00";
 
-  // Build Stage Stats
   const stageResults = [];
 
   for (const [stageName, games] of Object.entries(stage_totals)) {
@@ -812,33 +815,25 @@ async function analyzeReplays(folderPath, options = {}) {
     avgLcancelRate: avgLcancelRate.toFixed(2) + "%",
     lCancelSuccessTotal,
     lCancelFailTotal,
-
     avgWavedashes: avgWavedashes.toFixed(2),
     wavedashTotal,
-
     avgRolls: avgRolls.toFixed(2),
     rollTotal,
-
     avgLedgegrabs: avgLedgegrabs.toFixed(2),
     ledgegrabTotal,
-
     avgDashDances: avgDashDances.toFixed(2),
     dashDanceTotal,
-
     techSuccessRate: techSuccessRate.toFixed(2) + "%",
     techSuccessTotal,
     techFailTotal,
-
     totalStocksTaken,
     totalStocksLost,
-
     topThrowDir,
     topThrowCount,
-
     bestWinStreak,
+    bestLossStreak,
   };
 
-  // Build Final Result Object
   const resultObject = {
     foundGames: true,
     filters: {

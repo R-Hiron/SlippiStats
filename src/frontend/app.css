@@ -107,7 +107,9 @@ input {
   from { opacity: 0; transform: translateY(5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
+.table tr[title] td {
+  user-select: none;
+}
 .summary-cards {
   display: flex;
   flex-wrap: wrap;
@@ -165,6 +167,9 @@ input {
 }
 .table tr:hover td {
   background: var(--bg-card);
+}
+.stage-breakdown tbody tr:last-child td {
+  border-bottom: none;
 }
 .winrate-good {
   color: var(--good);

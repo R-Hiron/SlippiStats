@@ -1,7 +1,4 @@
-console.log("🔥 [MAIN] Loaded main.js from:", __dirname);
-console.log("🔥 [MAIN] Timestamp:", new Date().toISOString());
-
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { analyzeReplays, cancelAnalysis } = require("./src/backend/statsProcessor");
@@ -58,6 +55,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  Menu.setApplicationMenu(null);
 
   autoUpdater.on("update-available", () => {
     if (mainWindow) {
