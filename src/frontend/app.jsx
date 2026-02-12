@@ -34,6 +34,46 @@ function App() {
     "Link","Zelda","Ganondorf","Young_Link","Mewtwo","Mr_Game_And_Watch","Roy",
     "Pichu","Kirby","Bowser","Ness"
   ];
+  const defaultCustomTheme = {
+    "--bg-dark": "#0f0f0f",
+    "--bg-panel": "#181818",
+    "--bg-card": "#222222",
+    "--card-accent": "#3b82f6",
+    "--text-main": "#ffffff",
+    "--text-muted": "#a0a0a0",
+    "--accent": "#3b82f6",
+    "--accent-hover": "#2563eb",
+    "--good": "#22c55e",
+    "--bad": "#ef4444"};
+  const CUSTOM_KEYS = [
+    "--bg-dark",
+    "--bg-panel",
+    "--bg-card",
+    "--card-accent",
+    "--text-main",
+    "--text-muted",
+    "--accent",
+    "--accent-hover",
+    "--good",
+    "--bad",
+  ];
+  const [customTheme, setCustomTheme] = useState(JSON.parse(localStorage.getItem("customThemeTokens")) || defaultCustomTheme);
+  const [miscStatToggles, setMiscStatToggles] = useState(
+    JSON.parse(localStorage.getItem("miscStatToggles")) || {
+      lcancels: true,
+      wavedashes: true,
+      rolls: true,
+      ledgeGrabs: true,
+      dashDances: true,
+      techs: true,
+      stocks: true,
+      throws: true,
+      streaks: true
+    }
+  );
+  const getStockIcon = (characterName, theme) => {
+    if (characterName === "Luigi" && theme === "Sandon05") return "Luigi_White.png";
+    return `${characterName}.png`;};
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ processed: 0, total: 0 });
@@ -45,9 +85,8 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [openMatchupRows, setOpenMatchupRows] = useState(() => new Set());
-
-
-
+  const [sandonUnlocked, setSandonUnlocked] = useState(localStorage.getItem("sandonUnlocked") === "1");
+  const playerTagRef = React.useRef(null);
   const selectFolder = async () => {
     const selected = await window.api.selectFolder();
     if (selected) setFolder(selected);
@@ -95,6 +134,34 @@ function App() {
     return unsub;
   }, []);
 
+  React.useEffect(() => {
+    localStorage.setItem("miscStatToggles", JSON.stringify(miscStatToggles));
+  }, [miscStatToggles]);
+
+  React.useEffect(() => {
+  const savedTheme = localStorage.getItem("theme") || "dark";
+    if (savedTheme === "Sandon05" && !sandonUnlocked) {
+      setTheme("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      setTheme(savedTheme);
+    }
+  }, [sandonUnlocked]);
+  
+  React.useEffect(() => {
+    if (theme === "custom") {
+      Object.entries(customTheme).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(key, value);
+      });
+      localStorage.setItem("customThemeTokens", JSON.stringify(customTheme));
+    } else {
+      // ✅ remove inline overrides so CSS themes can take over again
+      CUSTOM_KEYS.forEach((key) => {
+        document.documentElement.style.removeProperty(key);
+      });
+    }
+  }, [theme, customTheme]); 
+
   function iconName(str) {
     return str
       .replace(/\./g, "")
@@ -102,6 +169,14 @@ function App() {
       .trim()
       .replace(/\s+/g, "_");
   }
+  function stockIconBaseName(name) {
+    const base = iconName(name);
+
+    if (theme === "Sandon05" && base === "Luigi") return "Luigi_White";
+
+    return base;
+  }
+
  
   function toggleMatchupRow(key) {
     setOpenMatchupRows(prev => {
@@ -201,7 +276,7 @@ function App() {
                 }}
               >
                 <img
-                  src={`./StockIcons/${c}.png`}
+                  src={`./StockIcons/${stockIconBaseName(c)}.png`}
                   style={{ width: 20, height: 20, marginRight: 8 }}
                 />
                 {c.replace(/_/g, " ")}
@@ -226,7 +301,7 @@ function App() {
               }}
             >
               <img
-                src={`./StockIcons/${c}.png`}
+                src={`./StockIcons/${stockIconBaseName(c)}.png`}
                 style={{ width: 20, height: 20, marginRight: 8 }}
               />
               {c.replace(/_/g, " ")}
@@ -291,13 +366,16 @@ function App() {
             position: "fixed",
             top: "60px",
             right: "10px",
-            width: "220px",
+            width: "320px",
             background: "var(--bg-panel)",
             border: "1px solid #333",
             borderRadius: "8px",
             padding: "1rem",
             zIndex: 999,
             boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
+            maxHeight: "70vh",
+            overflowY: "auto",
+            paddingRight: "0.75rem",
           }}
         >
           <h3 style={{ marginTop: 0 }}>Settings</h3>
@@ -320,8 +398,60 @@ function App() {
             <option value="dark">Dark</option>
             <option value="light">Light</option>
             <option value="slippi">Slippi Theme</option>
-            <option value="Sandon05">Sandon05 Theme</option>
+            <option value="custom">Custom</option>
+            {sandonUnlocked && (
+              <option value="Sandon05">Sandon05</option>
+            )}
           </select>
+          {theme === "custom" && (
+            <div className="custom-theme-editor">
+              <h3>Custom Theme Editor</h3>
+              {Object.entries(customTheme).map(([key, value]) => (
+                <div key={key} className="theme-row">
+                  <label>{key}</label>
+                  <input
+                    type="color"
+                    value={value}
+                    onChange={(e) =>
+                      setCustomTheme({
+                        ...customTheme,
+                        [key]: e.target.value
+                      })
+                    }
+                  />
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) =>
+                      setCustomTheme({
+                        ...customTheme,
+                        [key]: e.target.value
+                      })
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="misc-toggle-section">
+            <h3>Misc Stats</h3>
+            {Object.keys(miscStatToggles).map((key) => (
+              <label key={key}>
+                <input
+                  type="checkbox"
+                  checked={miscStatToggles[key]}
+                  onChange={() =>
+                    setMiscStatToggles({
+                      ...miscStatToggles,
+                      [key]: !miscStatToggles[key]
+                    })
+                  }
+                />
+                {key}
+              </label>
+            ))}
+          </div>
+
         </div>
       )}
 
@@ -336,8 +466,19 @@ function App() {
 
       <input
         placeholder="Enter Player Tag (e.g. GLTY#837)"
+        ref={playerTagRef}
         value={tag}
-        onChange={(e) => setTag(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setTag(value);
+
+          const normalized = value.trim().replace(/\s+/g, " ").toLowerCase();
+          if (normalized === "i play yellow luigi") {
+            localStorage.setItem("sandonUnlocked", "1");
+            setSandonUnlocked(true);
+            setTag("");
+          }
+        }}
         style={{ display: "block", margin: "0.5rem 0", width: "100%" }}
       />
       <CharacterDropdown
@@ -530,7 +671,7 @@ function App() {
             <details key={char} style={{ marginBottom: "1rem" }}>
               <summary>
                 <img
-                  src={`./StockIcons/${iconName(char)}.png`}
+                  src={`./StockIcons/${stockIconBaseName(char)}.png`}
                   style={{ width: 20, height: 20, marginRight: 8 }}
                 />
                 {char}
@@ -580,7 +721,7 @@ function App() {
                         >
                           <td>
                             <img
-                              src={`./StockIcons/${iconName(opp)}.png`}
+                              src={`./StockIcons/${stockIconBaseName(opp)}.png`}
                               style={{ width: 20, height: 20, marginRight: 8 }}
                             />
                             {opp}
@@ -647,6 +788,7 @@ function App() {
         <h2>Misc Stats</h2>
         <div className="summary-cards">
 
+        {miscStatToggles.lcancels && (
           <div className="card">
             <h1 className="StatsHeaders">L-Cancels</h1>
             <h3>L-Cancel Rate</h3>
@@ -654,7 +796,9 @@ function App() {
             <h3>Succeeded / Failed L-Cancels</h3>
             <h5>{results.misc.lCancelSuccessTotal} / {results.misc.lCancelFailTotal}</h5>
           </div>
+        )}
 
+        {miscStatToggles.wavedashes && (
           <div className="card">
             <h1 className="StatsHeaders">Wavedashes</h1>
             <h3>Average per Game</h3>
@@ -662,7 +806,9 @@ function App() {
             <h3>Total Wavedashes</h3>
             <h5>{results.misc.wavedashTotal}</h5>
           </div>
+        )}
 
+        {miscStatToggles.rolls && (
           <div className="card">
             <h1 className="StatsHeaders">Rolls</h1>
             <h3>Average per Game</h3>
@@ -670,7 +816,9 @@ function App() {
             <h3>Total Rolls</h3>
             <h5>{results.misc.rollTotal}</h5>
           </div>
+        )}
 
+        {miscStatToggles.ledgeGrabs && (
           <div className="card">
             <h1 className="StatsHeaders">Ledge Grabs</h1>
             <h3>Average per Game</h3>
@@ -678,7 +826,8 @@ function App() {
             <h3>Total Ledge Grabs</h3>
             <h5>{results.misc.ledgegrabTotal}</h5>
           </div>
-
+        )}
+        {miscStatToggles.dashDances && (
           <div className="card">
             <h1 className="StatsHeaders">Dash Dances</h1>
             <h3>Average per Game</h3>
@@ -686,7 +835,8 @@ function App() {
             <h3>Total Dash Dances</h3>
             <h5>{results.misc.dashDanceTotal}</h5>
           </div>
-
+        )}
+        {miscStatToggles.techs && (
           <div className="card">
             <h1 className="StatsHeaders">Techs</h1>
             <h3>Tech Success Rate</h3>
@@ -694,19 +844,22 @@ function App() {
             <h3>Succeeded / Failed Techs</h3>
             <h5>{results.misc.techSuccessTotal} / {results.misc.techFailTotal}</h5>
           </div>
-
+        )}
+        {miscStatToggles.stocks && (
           <div className="card">
             <h1 className="StatsHeaders">Stocks</h1>
             <h3>Stocks Taken / Lost</h3>
             <p>{results.misc.totalStocksTaken} / {results.misc.totalStocksLost}</p>
           </div>
-
+        )}
+        {miscStatToggles.throws && (
           <div className="card">
             <h1 className="StatsHeaders">Throws</h1>
             <h3>Most Used Throw</h3>
             <p>{results.misc.topThrowDir.toUpperCase()} – {results.misc.topThrowCount}</p>
           </div>
-
+        )}
+        {miscStatToggles.streaks && (
           <div className="card">
             <h1 className="StatsHeaders">Streaks</h1>
             <h3>Best Win Streak</h3>
@@ -714,7 +867,7 @@ function App() {
             <h3>Best Loss Streak</h3>
             <h5>{results.misc.bestLossStreak}</h5>
           </div>
-
+        )}
         </div>
 
       </div>

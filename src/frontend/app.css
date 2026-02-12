@@ -190,6 +190,25 @@ h1 {
   color: var(--accent);
 }
 
+.custom-theme-editor {
+  margin-top: 15px;
+  padding: 10px;
+  background: var(--bg-card);
+  border-radius: 8px;
+}
+
+.theme-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.theme-row label {
+  width: 160px;
+  font-size: 12px;
+}
+
 .overlay {
   position: fixed;
   top: 0;
