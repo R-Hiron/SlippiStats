@@ -4,7 +4,7 @@ const path = require("path");
 const glob = require("glob");
 const crypto = require("crypto");
 const { BrowserWindow } = require("electron");
-const { SlippiGame } = require("@slippi/slippi-js");
+const { SlippiGame, moves } = require("@slippi/slippi-js");
 
 
 // Lookup tables
@@ -365,6 +365,8 @@ async function analyzeReplays(folderPath, options = {}) {
   let totalStocksTaken = 0;
   let totalStocksLost = 0;
   let throwCounts = { up: 0, down: 0, forward: 0, back: 0 };
+  let moveUsageCounts = {};
+  let killMoveCounts = {};
   let currentWinStreak = 0;
   let bestWinStreak = 0;
   let currentLossStreak = 0;
@@ -606,6 +608,18 @@ async function analyzeReplays(folderPath, options = {}) {
             throwCounts.back += actions.throwCount.back || 0;
         }
 
+        const portIndex = gameData.settings?.players?.[pIndex]?.playerIndex ?? pIndex;
+        for (const conv of stats?.conversions || []) {
+            for (const m of conv.moves || []) {
+                if (m.playerIndex !== portIndex) continue;
+                moveUsageCounts[m.moveId] = (moveUsageCounts[m.moveId] || 0) + 1;
+            }
+            if (!conv.didKill || conv.lastHitBy !== portIndex) continue;
+            const killMove = conv.moves?.[conv.moves.length - 1];
+            if (!killMove) continue;
+            killMoveCounts[killMove.moveId] = (killMoveCounts[killMove.moveId] || 0) + 1;
+        }
+
         if (result.total_wins) {
             currentWinStreak++;
             if (currentWinStreak > bestWinStreak) bestWinStreak = currentWinStreak;
@@ -811,6 +825,16 @@ async function analyzeReplays(folderPath, options = {}) {
     .sort((a, b) => throwCounts[b] - throwCounts[a])[0];
   const topThrowCount = throwCounts[topThrowDir] || 0;
 
+  const topMoveId = Object.keys(moveUsageCounts)
+    .sort((a, b) => moveUsageCounts[b] - moveUsageCounts[a])[0];
+  const topMoveName = topMoveId != null ? moves.getMoveName(Number(topMoveId)) : "N/A";
+  const topMoveCount = topMoveId != null ? moveUsageCounts[topMoveId] : 0;
+
+  const topKillMoveId = Object.keys(killMoveCounts)
+    .sort((a, b) => killMoveCounts[b] - killMoveCounts[a])[0];
+  const topKillMoveName = topKillMoveId != null ? moves.getMoveName(Number(topKillMoveId)) : "N/A";
+  const topKillMoveCount = topKillMoveId != null ? killMoveCounts[topKillMoveId] : 0;
+
   const miscStats = {
     avgLcancelRate: avgLcancelRate.toFixed(2) + "%",
     lCancelSuccessTotal,
@@ -830,6 +854,10 @@ async function analyzeReplays(folderPath, options = {}) {
     totalStocksLost,
     topThrowDir,
     topThrowCount,
+    topMoveName,
+    topMoveCount,
+    topKillMoveName,
+    topKillMoveCount,
     bestWinStreak,
     bestLossStreak,
   };

@@ -58,19 +58,23 @@ function App() {
     "--bad",
   ];
   const [customTheme, setCustomTheme] = useState(JSON.parse(localStorage.getItem("customThemeTokens")) || defaultCustomTheme);
-  const [miscStatToggles, setMiscStatToggles] = useState(
-    JSON.parse(localStorage.getItem("miscStatToggles")) || {
-      lcancels: true,
-      wavedashes: true,
-      rolls: true,
-      ledgeGrabs: true,
-      dashDances: true,
-      techs: true,
-      stocks: true,
-      throws: true,
-      streaks: true
-    }
-  );
+  const defaultMiscStatToggles = {
+    lcancels: true,
+    wavedashes: true,
+    rolls: true,
+    ledgeGrabs: true,
+    dashDances: true,
+    techs: true,
+    stocks: true,
+    throws: true,
+    mostUsedMove: true,
+    killMove: true,
+    streaks: true
+  };
+  const [miscStatToggles, setMiscStatToggles] = useState({
+    ...defaultMiscStatToggles,
+    ...(JSON.parse(localStorage.getItem("miscStatToggles")) || {})
+  });
   const getStockIcon = (characterName, theme) => {
     if (characterName === "Luigi" && theme === "Sandon05") return "Luigi_White.png";
     return `${characterName}.png`;};
@@ -857,6 +861,20 @@ function App() {
             <h1 className="StatsHeaders">Throws</h1>
             <h3>Most Used Throw</h3>
             <p>{results.misc.topThrowDir.toUpperCase()} – {results.misc.topThrowCount}</p>
+          </div>
+        )}
+        {miscStatToggles.mostUsedMove && (
+          <div className="card">
+            <h1 className="StatsHeaders">Most Used Move</h1>
+            <h3>Most Used Move</h3>
+            <p>{results.misc.topMoveName} – {results.misc.topMoveCount}</p>
+          </div>
+        )}
+        {miscStatToggles.killMove && (
+          <div className="card">
+            <h1 className="StatsHeaders">Kill Move</h1>
+            <h3>Move That Killed The Most</h3>
+            <p>{results.misc.topKillMoveName} – {results.misc.topKillMoveCount}</p>
           </div>
         )}
         {miscStatToggles.streaks && (
