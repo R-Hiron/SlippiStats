@@ -100,6 +100,7 @@ function App() {
   const [appMode, setAppMode] = useState("stats"); // stats | clips
   const [clipPaths, setClipPaths] = useState(() => loadClipPaths());
   const [forceClipSetup, setForceClipSetup] = useState(false);
+  const [clipCreatorOpened, setClipCreatorOpened] = useState(false);
   const playerTagRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -114,6 +115,7 @@ function App() {
     if (!clipPathsConfigured(clipPaths)) {
       setForceClipSetup(true);
     }
+    setClipCreatorOpened(true);
     setAppMode("clips");
   };
   const selectFolder = async () => {
@@ -527,17 +529,21 @@ function App() {
         </div>
       )}
 
-      {appMode === "clips" ? (
-        <ClipCreator
-          folder={folder}
-          playerTag={tag}
-          theme={theme}
-          clipPaths={clipPaths}
-          setClipPaths={setClipPaths}
-          forceSetup={forceClipSetup}
-          onSetupComplete={() => setForceClipSetup(false)}
-        />
-      ) : (
+      {clipCreatorOpened && (
+        <div style={{ display: appMode === "clips" ? "block" : "none" }}>
+          <ClipCreator
+            folder={folder}
+            playerTag={tag}
+            theme={theme}
+            clipPaths={clipPaths}
+            setClipPaths={setClipPaths}
+            forceSetup={forceClipSetup}
+            onSetupComplete={() => setForceClipSetup(false)}
+          />
+        </div>
+      )}
+
+      {appMode === "stats" && (
       <>
       <h1>Slippi Stats Desktop</h1>
 
