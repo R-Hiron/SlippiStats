@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { analyzeReplays, cancelAnalysis } = require("./src/backend/statsProcessor");
+const { listGamesInFolder, getGameSummary } = require("./src/backend/gameIndex");
+const { generateClip, previewClipRange } = require("./src/backend/clipGenerator");
 const { autoUpdater, AppUpdater } = require("electron-updater");
 
 const isDev = process.env.NODE_ENV === "development";
@@ -107,6 +109,62 @@ app.whenReady().then(() => {
     return app.getVersion();
   });
 
+  ipcMain.handle("select-file", async (_event, options = {}) => {
+    const result = await dialog.showOpenDialog({
+      properties: ["openFile"],
+      filters: options.filters || undefined,
+      title: options.title || "Select file",
+    });
+    if (result.canceled) return null;
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle("select-path", async (_event, options = {}) => {
+    const properties = options.directory ? ["openDirectory"] : ["openFile"];
+    const result = await dialog.showOpenDialog({
+      properties,
+      filters: options.filters || undefined,
+      title: options.title || "Select path",
+    });
+    if (result.canceled) return null;
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle("list-clip-games", async (_event, folderPath, playerTag) => {
+    try {
+      return await listGamesInFolder(folderPath, playerTag || "");
+    } catch (err) {
+      console.error("list-clip-games error:", err);
+      return { error: err.message, games: [] };
+    }
+  });
+
+  ipcMain.handle("get-game-summary", async (_event, filePath, playerTag) => {
+    try {
+      return await getGameSummary(filePath, playerTag || "");
+    } catch (err) {
+      console.error("get-game-summary error:", err);
+      return { error: err.message };
+    }
+  });
+
+  ipcMain.handle("preview-clip", async (_event, payload) => {
+    try {
+      return await previewClipRange(payload);
+    } catch (err) {
+      console.error("preview-clip error:", err);
+      return { error: err.message };
+    }
+  });
+
+  ipcMain.handle("export-clip", async (_event, payload) => {
+    try {
+      return await generateClip(payload);
+    } catch (err) {
+      console.error("export-clip error:", err);
+      return { error: err.message };
+    }
+  });
 
 });
 

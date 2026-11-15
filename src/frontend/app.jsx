@@ -3,6 +3,13 @@ console.log("🌈 [RENDERER] app.jsx loaded at", new Date().toISOString());
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./app.css";
+import ClipCreator from "./clips/ClipCreator";
+import {
+  CLIP_PATH_FIELDS,
+  loadClipPaths,
+  saveClipPaths,
+  clipPathsConfigured,
+} from "./clips/clipSettings";
 
 function formatPlaytime(hms) {
   if (!hms) return "0s";
@@ -90,7 +97,25 @@ function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [openMatchupRows, setOpenMatchupRows] = useState(() => new Set());
   const [sandonUnlocked, setSandonUnlocked] = useState(localStorage.getItem("sandonUnlocked") === "1");
+  const [appMode, setAppMode] = useState("stats"); // stats | clips
+  const [clipPaths, setClipPaths] = useState(() => loadClipPaths());
+  const [forceClipSetup, setForceClipSetup] = useState(false);
   const playerTagRef = React.useRef(null);
+
+  React.useEffect(() => {
+    saveClipPaths(clipPaths);
+  }, [clipPaths]);
+
+  const enterClipMode = () => {
+    if (!folder) {
+      alert("Select a replay folder first.");
+      return;
+    }
+    if (!clipPathsConfigured(clipPaths)) {
+      setForceClipSetup(true);
+    }
+    setAppMode("clips");
+  };
   const selectFolder = async () => {
     const selected = await window.api.selectFolder();
     if (selected) setFolder(selected);
@@ -327,8 +352,8 @@ function App() {
   }
 
   return (
-    <div className="container">
-    <div style={{ padding: "2rem", fontFamily: "sans-serif", maxWidth: 800 }}>
+    <div className={`container ${appMode === "clips" ? "container-clips" : ""}`}>
+    <div style={{ padding: "2rem", fontFamily: "sans-serif", maxWidth: appMode === "clips" ? 960 : 800, margin: "0 auto" }}>
       {updateAvailable && (
         <div style={{ background: "#ffcc00", padding: "1rem", marginBottom: "1rem" }}>
           {updateMessage || "A new update is downloading..."}
@@ -347,30 +372,34 @@ function App() {
         </div>
       )}
 
-      <div
-        style={{
-          position: "fixed",
-          top: "10px",
-          right: "10px",
-          background: "var(--bg-panel)",
-          padding: "8px 12px",
-          borderRadius: "6px",
-          cursor: "pointer",
-          userSelect: "none",
-          zIndex: 1000,
-        }}
-        onClick={() => setSettingsOpen((prev) => !prev)}
-      >
-        ⚙️
+      <div className="app-chrome-controls">
+        {folder ? (
+          <button
+            type="button"
+            className="mode-toggle-btn"
+            onClick={() => {
+              if (appMode === "clips") setAppMode("stats");
+              else enterClipMode();
+            }}
+          >
+            {appMode === "clips" ? "Back to Stats" : "Clip Creator"}
+          </button>
+        ) : null}
+        <div
+          className="settings-gear"
+          onClick={() => setSettingsOpen((prev) => !prev)}
+        >
+          ⚙️
+        </div>
       </div>
 
       {settingsOpen && (
         <div
           style={{
             position: "fixed",
-            top: "60px",
+            top: folder ? "100px" : "60px",
             right: "10px",
-            width: "320px",
+            width: "360px",
             background: "var(--bg-panel)",
             border: "1px solid #333",
             borderRadius: "8px",
@@ -456,10 +485,60 @@ function App() {
             ))}
           </div>
 
+          <div className="clip-settings-section">
+            <h3>Clip Creator Paths</h3>
+            {CLIP_PATH_FIELDS.map((field) => (
+              <div key={field.key} className="clip-path-row settings-clip-path">
+                <label>{field.label}</label>
+                <div className="clip-path-controls">
+                  <input
+                    type="text"
+                    value={clipPaths[field.key] || ""}
+                    onChange={(e) =>
+                      setClipPaths((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const selected = await window.api.selectPath({
+                        directory: field.directory,
+                        filters: field.filters,
+                        title: `Select ${field.label}`,
+                      });
+                      if (selected) {
+                        setClipPaths((prev) => ({
+                          ...prev,
+                          [field.key]: selected,
+                        }));
+                      }
+                    }}
+                  >
+                    Browse
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </div>
       )}
 
-
+      {appMode === "clips" ? (
+        <ClipCreator
+          folder={folder}
+          playerTag={tag}
+          theme={theme}
+          clipPaths={clipPaths}
+          setClipPaths={setClipPaths}
+          forceSetup={forceClipSetup}
+          onSetupComplete={() => setForceClipSetup(false)}
+        />
+      ) : (
+      <>
       <h1>Slippi Stats Desktop</h1>
 
       <button onClick={selectFolder}>Select Replay Folder</button>
@@ -525,8 +604,10 @@ function App() {
       <button onClick={analyze} disabled={loading}>
         {loading ? "Analyzing..." : "Analyze"}
       </button>
+      </>
+      )}
     </div>
-    {loading && (
+    {appMode === "stats" && loading && (
   <div className="overlay">
     <div className="spinner" />
     {progress.total > 0 && (
@@ -595,7 +676,7 @@ function App() {
   </div>
 )}
         {/* --- Results section --- */}
-    {results && results.foundGames && (
+    {appMode === "stats" && results && results.foundGames && (
       <div className="results">
         {/* --- Summary cards --- */}
         <div className="summary-cards">
@@ -891,8 +972,7 @@ function App() {
       </div>
     )}
   </div>
-);
-
+  );
 }
 
 createRoot(document.getElementById("root")).render(<App />);
